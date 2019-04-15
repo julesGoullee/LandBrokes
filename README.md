@@ -1,2 +1,2 @@
 # RobInTheHood
-### Helping millenials get the best bang for their buck
+### Helping millennials get the best bang for their buck
