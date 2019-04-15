@@ -6,7 +6,7 @@ contract ICreditScoring {
 
   struct ScoreCardElement {
 
-
+    
 
   }
 
