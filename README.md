@@ -1,2 +1,2 @@
 # RobInTheHood
-### High risk, high reward investments
+### Helping millenials get the best bang for their buck
