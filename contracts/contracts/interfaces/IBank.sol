@@ -6,7 +6,7 @@ contract IBank is Ownable {
 
   //Functions having onlyOwner are managed by our backend
 
-  event Bid(uint256 landId, address tokenAddress, bytes investorData);
+  event ProcessedBid(uint256 landId, address tokenAddress, bytes investorData);
   event CancelledBid(address _tokenAddress, uint256 _tokenId);
   event Deposited(uint256 timestamp, bytes depositType, uint256 amount, address who);
   event Withdrew(uint256 timestamp, bytes withdrawalType, uint256 amount, address who);
@@ -35,7 +35,7 @@ contract IBank is Ownable {
   }
 
   //Hashed tickers used in splitBalances and wholeBalances
-  bytes public constant MANA = keccak256("MANA");
+  bytes32 public constant MANA = keccak256("MANA");
 
   //How many land owners can pool money together at once in order to bid
   uint8 public constant MAX_LAND_OWNERS = 30;
@@ -65,13 +65,13 @@ contract IBank is Ownable {
   Bid[] bids;
 
   //Some people want to let us invest for them but only want a fraction of LAND
-  mapping(address => mapping(bytes => uint256)) splitBalances;
+  mapping(address => mapping(bytes32 => uint256)) splitBalances;
 
   //Others want to let us invest for them and target whole plots of LAND
-  mapping(address => mapping(bytes => uint256)) wholeBalances;
+  mapping(address => mapping(bytes32 => uint256)) wholeBalances;
 
   //Funds already used in a bid
-  mapping(address => mapping(bytes => uint256)) lockedForBidding;
+  mapping(address => mapping(bytes32 => uint256)) lockedForBidding;
 
   //LAND id being bid on by us
   mapping(uint256 => bool) beingBid;
@@ -79,9 +79,9 @@ contract IBank is Ownable {
   //Details for LAND token deposited in this contract and split; mapping LAND token id to Land struct
   mapping(uint256 => Land) landDetails;
 
-  enum BID_RESULT {ONGOING, SUCCESSFUL, FAILED, CANCELLED};
+  enum BID_RESULT {ONGOING, SUCCESSFUL, FAILED, CANCELLED}
 
-  enum BALANCE_TYPE {SPLIT, WHOLE};
+  enum BALANCE_TYPE {SPLIT, WHOLE}
 
   function getDepositedLandSplitAddress(
     uint256 landID
@@ -122,6 +122,8 @@ contract IBank is Ownable {
     uint256 position
   ) public view returns (uint8);
 
+  //needs onlyOwner
+
   /**
   * @dev Bid for land using the Decentraland Bid contract.
          Our backend monitors this smart contract and
@@ -130,8 +132,8 @@ contract IBank is Ownable {
          fund for millenials and Gen Zs. They simply send money to this
          contract and we take care to invest it
 
-  * @warn In the investors array we cannot mix those who want only a fraction
-          of LAND and those who want a whole plot
+  *  In the investors array we cannot mix those who want only a fraction
+     of LAND and those who want a whole plot
 
   * @param investmentType - SPLIT or WHOLE (we will divide the LAND or we give the entire LAND to one entity)
   * @param landId - The id of the LAND we want to invest in
@@ -143,9 +145,9 @@ contract IBank is Ownable {
     uint8 investmentType,
     uint256 landId,
     address tokenAddress,
-    address[] memory investors,
-    address[] memory _amountsInvested)
-    external onlyOwner;
+    address[] calldata investors,
+    address[] calldata _amountsInvested)
+    external;
 
   /**
   * @dev Cancel a bid. This function can only be triggered from registerBidResult
@@ -193,12 +195,15 @@ contract IBank is Ownable {
            The first array is the investors addresses, the second one is the array
            specifying how many LAND parts each investor will get
   **/
+
+  //needs onlyOwner
+
   function registerBidResult(
     uint8 result,
     address tokenAddress,
     uint256 _tokenId,
-    bytes memory investorData)
-    external onlyOwner;
+    bytes calldata investorData)
+    external;
 
   /**
   * @dev Allow anyone to deposit a LAND token in this contract and create
@@ -211,7 +216,7 @@ contract IBank is Ownable {
          the address of the new contract and how many portions of LAND
          were created.
 
-  * @param tokenAddress - Address of the ERC721 LAND token
+  * @param _tokenAddress - Address of the ERC721 LAND token
   * @param _tokenId - The id of the LAND we want to invest in
   * @param landParts - Needs to be less than or equal to MAX_LAND_SPLITS
                        Tells the newly created SplitLand contract in how

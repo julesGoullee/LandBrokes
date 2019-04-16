@@ -6,7 +6,7 @@ contract ICreditScoring is Ownable {
 
   enum BACKING_TYPE {ERC20, ERC721}
 
-  enum REQUEST_STATUS {STARTED, CANCELLED, CREATED};
+  enum REQUEST_STATUS {STARTED, CANCELLED, CREATED}
 
   struct CreditRequest {
 
@@ -113,30 +113,38 @@ contract ICreditScoring is Ownable {
 
   CreditRequest[] public creditRequests;
 
+  //needs onlyOwner
+
   function setCardOption(
-    string memory elementName,
+    string calldata elementName,
     uint256 elementOption,
     int256 score
-  ) external onlyOwner;
+  ) external;
+
+  //needs onlyOwner
 
   function toggleWhitelistedCoin(
     address coin
-  ) external onlyOwner;
+  ) external;
+
+  //needs onlyOwner
 
   function changeMaxRequestAvailability(
     uint256 _secondAmount
-  ) external onlyOwner;
+  ) external;
+
+  //needs onlyOwner
 
   function changeMaxBorrowedPoints(
     uint256 points
-  ) external onlyOwner;
+  ) external;
 
   function computeCreditScore(
-    uint256[] memory elements)
-    public view returns (uint256);
+    uint256[] calldata elements)
+    external view returns (uint256);
 
   function computeAndUpdateScore(
-    uint256[] memory elements) external;
+    uint256[] calldata elements) external;
 
   function registerUser() external;
 
@@ -146,40 +154,40 @@ contract ICreditScoring is Ownable {
     uint256 _lendingDuration,
     address _borrower,
     address _lender,
-    bytes memory _askData,
-    bytes memory _offerData
+    bytes calldata _askData,
+    bytes calldata _offerData
   ) external;
 
   function fillRequest(
-    bytes memory _lenderCollateral
-  ) public;
+    bytes calldata _lenderCollateral
+  ) external;
 
   function cancelRequest(
     uint256 position
-  ) public;
+  ) external;
 
   function changeRequestCoinOffered(
     uint256 position,
     address newCoinOffered
-  ) public;
+  ) external;
 
   function changeRequestCoinAmountOffered(
     uint256 position,
     uint256 coinAmount
-  ) public;
+  ) external;
 
   function payBackDebt(
     uint256 position,
     uint256 _coinAmount
-  ) public;
+  ) external;
 
   function borrowerGetBackCollateral(
     uint256 position
-  ) public;
+  ) external;
 
   function punishBorrowerNonPayment(
     uint256 position
-  ) public;
+  ) external;
 
 
 
