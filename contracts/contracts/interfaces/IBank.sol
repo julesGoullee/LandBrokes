@@ -24,23 +24,45 @@ contract IBank is Ownable {
 
   }
 
+  struct Bid {
+
+    bytes bidData;
+
+    uint256 creationTimestamp;
+
+    uint8 bidStatus;
+
+  }
+
   //Hashed tickers used in splitBalances and wholeBalances
-  bytes constant MANA = keccak256("MANA");
+  bytes public constant MANA = keccak256("MANA");
 
   //How many land owners can pool money together at once in order to bid
-  uint8 constant MAX_LAND_OWNERS = 30;
+  uint8 public constant MAX_LAND_OWNERS = 30;
 
   //Maximum number of pieces a patch of LAND can be split in
-  uint16 constant MAX_LAND_SPLITS = 10000;
+  uint16 public constant MAX_LAND_SPLITS = 10000;
 
   //When submitting a bid, we specify this duration (which is 1 day less than max amount permitted)
-  uint256 BID_DURATION = 181 days;
+  uint256 public BID_DURATION = 181 days;
+
+  //The amount of time needs to pass since we locked some investor money for a bid but we did not update the bid status so it can be cancelled and investors get their money back
+  uint256 public constant NO_ACTION_CANCEL_BID_AFTER = 12 weeks;
 
   //How much MANA was deposited for buying whole plots of LAND without splitting
-  uint256 wholeLandMANAFunds;
+  uint256 public wholeLandMANAFunds;
 
   //How much MANA was deposited for buying whole plots of LAND and then split them
-  uint256 splitLandMANAFunds;
+  uint256 public splitLandMANAFunds;
+
+  /**
+  *  When submitting a bid we lock up the funds of the investors we take money from.
+  *  In order for them to get their money back in case we don't update the bid status
+  *  for a specific bid, we abi.encode the investors and _amountsInvested
+  *  and store the resulting bytes in a Bid struct alongside the current timestamp
+  *  and the ONGOING status
+  **/
+  Bid[] bids;
 
   //Some people want to let us invest for them but only want a fraction of LAND
   mapping(address => mapping(bytes => uint256)) splitBalances;
@@ -57,9 +79,48 @@ contract IBank is Ownable {
   //Details for LAND token deposited in this contract and split; mapping LAND token id to Land struct
   mapping(uint256 => Land) landDetails;
 
-  enum BID_RESULT {SUCCESSFUL, FAILED, CANCELLED};
+  enum BID_RESULT {ONGOING, SUCCESSFUL, FAILED, CANCELLED};
 
   enum BALANCE_TYPE {SPLIT, WHOLE};
+
+  function getDepositedLandSplitAddress(
+    uint256 landID
+  ) public view returns (address);
+
+  function getDepositedLandParts(
+    uint256 landID
+  ) public view returns (uint256);
+
+  function getSplitBalance(
+    address who,
+    bytes memory hashedCoinTicker
+  ) public view returns (uint256);
+
+  function getWholeBalance(
+    address who,
+    bytes memory hashedCoinTicker
+  ) public view returns (uint256);
+
+  function getLockedFunds(
+    address who,
+    bytes memory coinTicker
+  ) public view returns (uint256);
+
+  function landIsBeingBid(
+    uint256 landId
+  ) public view returns (bool);
+
+  function getBidInvestorData(
+    uint256 position
+  ) public view returns (bytes memory);
+
+  function getBidCreation(
+    uint256 position
+  ) public view returns (uint256);
+
+  function getBidStatus(
+    uint256 position
+  ) public view returns (uint8);
 
   /**
   * @dev Bid for land using the Decentraland Bid contract.
@@ -82,8 +143,8 @@ contract IBank is Ownable {
     uint8 investmentType,
     uint256 landId,
     address tokenAddress,
-    address[] investors,
-    address[] _amountsInvested)
+    address[] memory investors,
+    address[] memory _amountsInvested)
     external onlyOwner;
 
   /**
@@ -136,7 +197,7 @@ contract IBank is Ownable {
     uint8 result,
     address tokenAddress,
     uint256 _tokenId,
-    bytes investorData)
+    bytes memory investorData)
     external onlyOwner;
 
   /**
@@ -175,5 +236,17 @@ contract IBank is Ownable {
     uint256 id,
     address reconstructedLandReceiver)
     external;
+
+  /**
+  * @dev Cancel a bid if it hasn't been updated for the time specified in NO_ACTION_CANCEL_BID_AFTER
+  *      This function should decode the bytes value, get the investors and amounts arrays,
+         and send the money out of this contract and back to the investors. Remember to decrease the
+         lockedForBidding value for each investor! Also update the bid status to CANCELLED
+
+  * @param bidPosition - The position of the bid in the bids array
+  **/
+  function cancelBidAfterNoAction(
+    uint256 bidPosition
+  ) external;
 
 }
