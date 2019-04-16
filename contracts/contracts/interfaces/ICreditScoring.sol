@@ -4,6 +4,21 @@ import "contracts/zeppelin/ownership/Ownable.sol";
 
 contract ICreditScoring is Ownable {
 
+  event SetCardOption(string elementName, uint256 elementOption, int256 score);
+  event ToggledCoin(address _coin);
+  event ChangedMaxRequestAvailability(uint256 _availability);
+  event ChangedMaxBorrowedPoints(uint256 _points);
+  event UpdatedScore(address _user, int256 _newScore, string ipfsProof);
+  event UserRegistered(address _user);
+  event RequestedCreditPoints(address _user, uint256 _lendingDuration, bytes _askData, bytes _offerData);
+  event FilledRequest(address _lender, uint256 requestPosition);
+  event CancelledRequest(address borrower, uint256 position);
+  event ChangedRequestCoinOffered(uint256 position, address newCoin);
+  event ChangedRequestCoinAmountOffered(uint256 position, uint256 coinAmount);
+  event PaidBack(address _caller, uint256 request, uint256 coinAmount);
+  event GotBackCollateral(address caller, uint256 requestPosition);
+  event PunishedBorrower(address caller, uint256 requestPosition);
+
   enum BACKING_TYPE {ERC20, ERC721}
 
   enum REQUEST_STATUS {STARTED, CANCELLED, CREATED}
@@ -261,9 +276,11 @@ contract ICreditScoring is Ownable {
          limit by also lending for this request. The number of points being
          asked for in the request will be decreased from the lender's personalScore
          and increased in their currentlyLentPoints
+
+  * @param position - The position of the request in creditRequests
   **/
 
-  function fillRequest() external;
+  function fillRequest(uint256 position) external;
 
   /**
   * @dev Cancel a request. Only the creator can cancel. Also the creator cannot
@@ -301,16 +318,42 @@ contract ICreditScoring is Ownable {
     uint256 coinAmount
   ) external;
 
-  
+  /**
+  * @dev Pay ERC20 tokens to fulfill a request filled by a lender for you.
+         The caller needs to approve this contract to transfer the correct
+         ERC20 token to the lender. Also the caller does not necessarily
+         need to be the borrower. The caller can pay at max how many tokens
+         were specified in the request. The caller does not need to pay
+         everything at once.
+
+  * @param position - The position of the request in creditRequests
+  * @param _coinAmount - How many ERC20 tokens are being sent to the lender
+  **/
 
   function payBackDebt(
     uint256 position,
     uint256 _coinAmount
   ) external;
 
+  /**
+  * @dev The borrower can get back their collateral only if:
+
+        * They paid all the necessary ERC20 tokens to the lender
+        * They waited at least WAIT_FOR_COLLATERAL_RETREIVAL seconds after the request reached maturity
+
+  * @param position - The position of the request in creditRequests
+  **/
+
   function borrowerGetBackCollateral(
     uint256 position
   ) external;
+
+  /**
+  * @dev The lender can confiscate the borrower's collateral in case they didn't
+         pay all the ERC20 tokens until the request reached maturity
+
+  * @param position - The position of the request in creditRequests
+  **/
 
   function punishBorrowerNonPayment(
     uint256 position
