@@ -9,8 +9,8 @@ contract ISplitLand is StandardToken {
   *  we specify the variables below. In the constructor we also pass
   *  the total supply (which in our Bank contract is max 10K).
   *
-  *  We make sure we also pass an array of addresses and the amount of
-  *  split land each address will receive.
+  *  We make sure we also pass an array of addresses and a uint256 array
+  *  specifying how many tokens (LAND portions) each address will get
   **/
 
   string name;
