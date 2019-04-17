@@ -250,14 +250,18 @@ contract ICreditScoring is Ownable {
   ) external;
 
   /**
-  * @dev A user can register in the CreditScoring contract. Registration is needed
-         to initialize the user's struct where we store their data.
+  * @dev A user can register themselves in the CreditScoring contract.
+         Registration is needed to initialize the user's struct where we store
+         their data.
+
+  * @param _user - If the owner is calling this function, they can register
+                   a user without the user paying gas fees
   **/
 
-  function registerUser() external;
+  function registerUser(address _user) external;
 
   /**
-  * @dev Request credit points.
+  * @dev Request credit points. Alternatively the owner can request points on behalf of a user
 
   * @param _lendingDuration - How many seconds this address wants to keep the borrowed points
   * @param _askData - The encoded ASK parameters (ASK params are detailed in CreditRequest)
@@ -265,6 +269,7 @@ contract ICreditScoring is Ownable {
   **/
 
   function requestCreditPoints(
+    address _user,
     uint256 _lendingDuration,
     bytes calldata _askData,
     bytes calldata _offerData
