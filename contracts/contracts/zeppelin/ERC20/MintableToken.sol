@@ -1,7 +1,7 @@
-pragma solidity 0.5.3;
+pragma solidity 0.5.7;
 
-import "contracts/zeppelin/ERC20/StandardToken.sol";
-import "contracts/zeppelin/ownership/Ownable.sol";
+import "./StandardToken.sol";
+import "../ownership/Ownable.sol";
 
 
 /**

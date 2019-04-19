@@ -1,6 +1,6 @@
-pragma solidity 0.5.3;
+pragma solidity 0.5.7;
 
-import "contracts/zeppelin/ERC721/ERC721Receiver.sol";
+import "./ERC721Receiver.sol";
 
 
 contract ERC721Holder is ERC721Receiver {

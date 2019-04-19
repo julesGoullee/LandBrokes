@@ -1,6 +1,6 @@
-pragma solidity 0.5.3;
+pragma solidity 0.5.7;
 
-import "contracts/zeppelin/ERC721/ERC721Basic.sol";
+import "./ERC721Basic.sol";
 
 
 /**

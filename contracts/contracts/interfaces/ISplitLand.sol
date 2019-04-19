@@ -1,6 +1,6 @@
-pragma solidity 0.5.3;
+pragma solidity 0.5.7;
 
-import "contracts/zeppelin/ERC20/StandardToken.sol";
+import '../zeppelin/ERC20/StandardToken.sol';
 
 contract ISplitLand is StandardToken {
 
