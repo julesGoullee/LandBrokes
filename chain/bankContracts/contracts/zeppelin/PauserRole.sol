@@ -1,6 +1,6 @@
 pragma solidity 0.5.7;
 
-import "contracts/zeppelin/Roles.sol";
+import "./Roles.sol";
 
 contract PauserRole {
 

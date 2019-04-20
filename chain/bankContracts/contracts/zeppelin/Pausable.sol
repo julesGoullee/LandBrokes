@@ -1,6 +1,6 @@
 pragma solidity 0.5.7;
 
-import "contracts/zeppelin/PauserRole.sol";
+import "./PauserRole.sol";
 
 /**
  * @title Pausable

@@ -1,7 +1,7 @@
 pragma solidity 0.5.7;
 
-import "contracts/zeppelin/ERC20/BasicToken.sol";
-import "contracts/zeppelin/ERC20/ERC20.sol";
+import "./BasicToken.sol";
+import "./ERC20.sol";
 
 /**
  * @title Standard ERC20 token
