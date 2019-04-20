@@ -8,7 +8,7 @@ contract IBank is Ownable {
 
   //Functions having onlyOwner are managed by our backend
 
-  event ProcessedBid(uint256 landId);
+  event ProcessedBid(uint256 landId, uint256 totalBid, uint256 duration);
   event CancelledBid(uint256 _tokenId);
   event BoughtLand(uint256 landId);
   event Deposited(uint256 timestamp, bytes depositType, uint256 amount, address who);

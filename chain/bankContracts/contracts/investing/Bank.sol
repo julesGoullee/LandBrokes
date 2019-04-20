@@ -23,9 +23,6 @@ contract Bank is IBank, ContractDetector {
       require(max_land_splits > 0, "You need a positive number of land splits");
       require(maxBidDuration > 0, "The bid duration needs to be positive");
       require(_noActionCancelAfter > 0, "_noActionCancelAfter has to be positive");
-      require(isContract(_manaToken) == true, "The _manaToken is not a contract address");
-      require(isContract(_landToken) == true, "The _landToken is not a contract address");
-      require(isContract(_decentralandBid) == true, "The _decentralandBid is not a contract address");
 
       MANA = keccak256(abi.encode(manaTicker));
       MAX_LAND_OWNERS = maxLandOwners;
@@ -107,6 +104,8 @@ contract Bank is IBank, ContractDetector {
         require(wholeLandMANAFunds >= totalToInvest,
           "The is not enough MANA for whole investments");
 
+        wholeLandMANAFunds = wholeLandMANAFunds.sub(totalToInvest);
+
         wholeBalances[investors[0]][MANA] =
           wholeBalances[investors[0]][MANA].sub(_amountsInvested[0]);
 
@@ -115,7 +114,20 @@ contract Bank is IBank, ContractDetector {
 
       } else if (investmentType == 1) {
 
+        require(splitLandMANAFunds >= totalToInvest,
+          "The is not enough MANA for split investments");
 
+        splitLandMANAFunds = splitLandMANAFunds.sub(totalToInvest);
+
+        for (uint j = 0; j < investors.length; j++) {
+
+          wholeBalances[investors[j]][MANA] =
+            wholeBalances[investors[j]][MANA].sub(_amountsInvested[j]);
+
+          lockedForBidding[investors[j]][MANA] =
+            lockedForBidding[investors[j]][MANA].add(_amountsInvested[j]);
+
+        }
 
       }
 
@@ -136,7 +148,7 @@ contract Bank is IBank, ContractDetector {
         BID_DURATION
       );
 
-
+      emit ProcessedBid(landId, totalToInvest, BID_DURATION);
 
     }
 
