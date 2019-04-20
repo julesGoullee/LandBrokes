@@ -1,8 +1,8 @@
 pragma solidity 0.5.7;
 
-import "contracts/zeppelin/ownership/Ownable.sol";
-import "contracts/mana/MANAToken.sol";
-import "contracts/interfaces/Bid.sol";
+import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
+import "./.././mana/MANAToken.sol";
+import "./.././interfaces/Bid.sol";
 
 contract IBank is Ownable {
 

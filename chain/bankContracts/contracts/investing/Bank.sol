@@ -1,8 +1,8 @@
 pragma solidity ^0.5.7;
 
-import "contracts/interfaces/IBank.sol";
-import "contracts/zeppelin/ContractDetector.sol";
-import "contracts/zeppelin/SafeMath.sol";
+import "./.././interfaces/IBank.sol";
+import "./.././zeppelin/ContractDetector.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 contract Bank is IBank, ContractDetector {
 
@@ -260,10 +260,14 @@ contract Bank is IBank, ContractDetector {
         wholeBalances[_target][MANA] =
           wholeBalances[_target][MANA].add(_amount);
 
+        wholeLandMANAFunds = wholeLandMANAFunds.add(_amount);
+
       } else {
 
         splitBalances[_target][MANA] =
           splitBalances[_target][MANA].add(_amount);
+
+        splitLandMANAFunds = splitLandMANAFunds.add(_amount);
 
       }
 
@@ -271,7 +275,38 @@ contract Bank is IBank, ContractDetector {
 
     }
 
-    
+    function withdrawMANA(uint8 balanceType, uint256 _amount) external {
+
+      require(balanceType <= 1, "The balance type needs to be 0 or 1");
+
+      if (balanceType == 0) {
+
+        require(wholeBalances[msg.sender][MANA] >= _amount,
+          "You do not have that much MANA for whole investments");
+
+        wholeBalances[msg.sender][MANA] =
+          wholeBalances[msg.sender][MANA].sub(_amount);
+
+        wholeLandMANAFunds = wholeLandMANAFunds.sub(_amount);
+
+      } else {
+
+        require(splitBalances[msg.sender][MANA] >= _amount,
+          "You do not have that much MANA for split investments");
+
+        splitBalances[msg.sender][MANA] =
+          splitBalances[msg.sender][MANA].sub(_amount);
+
+        splitLandMANAFunds = splitLandMANAFunds.sub(_amount);
+
+      }
+
+      require(manaToken.transfer(msg.sender, _amount) == true,
+        "Could not transfer money in the withdraw function");
+
+      emit WithdrewMANA(balanceType, msg.sender, _amount);
+
+    }
 
     //PRIVATE
 
