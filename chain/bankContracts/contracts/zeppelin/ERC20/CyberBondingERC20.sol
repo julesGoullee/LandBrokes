@@ -2,7 +2,7 @@ pragma solidity 0.5.7;
 
 import "contracts/zeppelin/ERC20/IBondingERC20.sol";
 import "contracts/zeppelin/SafeMath.sol";
-import "contracts/zeppelin/ERC20/ownership/Ownable.sol";
+import "contracts/zeppelin/ownership/Ownable.sol";
 
 contract CyberBondingERC20 is IBondingERC20, Ownable {
 

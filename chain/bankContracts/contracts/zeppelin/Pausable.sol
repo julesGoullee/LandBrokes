@@ -1,6 +1,6 @@
 pragma solidity 0.5.7;
 
-import "contracts/zeppelin/ERC20/PauserRole.sol";
+import "contracts/zeppelin/PauserRole.sol";
 
 /**
  * @title Pausable
