@@ -1,7 +1,7 @@
 pragma solidity 0.5.7;
 
-import '../SafeMath.sol';
-import '../ownership/Ownable.sol';
+import 'contracts/zeppelin/SafeMath.sol';
+import 'contracts/zeppelin/ownership/Ownable.sol';
 
 /**
  * @title RefundVault

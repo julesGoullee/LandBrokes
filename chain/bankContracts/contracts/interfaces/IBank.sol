@@ -1,8 +1,8 @@
 pragma solidity 0.5.7;
 
-import "../zeppelin/ownership/Ownable.sol";
-import "../mana/MANAToken.sol";
-import "./Bid.sol";
+import "contracts/zeppelin/ownership/Ownable.sol";
+import "contracts/mana/MANAToken.sol";
+import "contracts/interfaces/Bid.sol";
 
 contract IBank is Ownable {
 
@@ -38,19 +38,19 @@ contract IBank is Ownable {
   }
 
   //Hashed tickers used in splitBalances and wholeBalances
-  bytes32 public constant MANA;
+  bytes32 public MANA;
 
   //How many land owners can pool money together at once in order to bid
-  uint8 public constant MAX_LAND_OWNERS;
+  uint8 public MAX_LAND_OWNERS;
 
   //Maximum number of pieces a patch of LAND can be split in
-  uint16 public constant MAX_LAND_SPLITS;
+  uint16 public MAX_LAND_SPLITS;
 
   //When submitting a bid, we specify this duration (which is 1 day less than max amount permitted)
   uint256 public BID_DURATION;
 
   //The amount of time needs to pass since we locked some investor money for a bid but we did not update the bid status so it can be cancelled and investors get their money back
-  uint256 public constant NO_ACTION_CANCEL_BID_AFTER;
+  uint256 public NO_ACTION_CANCEL_BID_AFTER;
 
   //How much MANA was deposited for buying whole plots of LAND without splitting
   uint256 public wholeLandMANAFunds;
@@ -153,7 +153,6 @@ contract IBank is Ownable {
 
   * @param investmentType - SPLIT or WHOLE (we will divide the LAND or we give the entire LAND to one entity)
   * @param landId - The id of the LAND we want to invest in
-  * @param tokenAddress - Address of the ERC721 token
   * @param investors - The addresses whose funds we will use to bid
   * @param _amountsInvested - The amount we use from each investor's balance
   */
@@ -161,7 +160,7 @@ contract IBank is Ownable {
     uint8 investmentType,
     uint256 landId,
     address[] calldata investors,
-    address[] calldata _amountsInvested)
+    uint256[] calldata _amountsInvested)
     external;
 
   /**
@@ -176,11 +175,9 @@ contract IBank is Ownable {
 
   /**
   * @dev Cancel a bid. This function can only be triggered from registerBidResult
-  * @param _tokenAddress - Address of the ERC721 token
   * @param _tokenId - The id of the LAND we previously bid for
   **/
   function cancelLandBid(
-    address _tokenAddress,
     uint256 _tokenId)
     internal;
 
@@ -214,7 +211,6 @@ contract IBank is Ownable {
          in that LAND.
 
   * @param result - It can be 0, 1 or 2 (SUCCESSFUL, FAILED, CANCELLED)
-  * @param tokenAddress - Address of the ERC721 token
   * @param _tokenId - The id of the LAND we want to invest in
   * @param investorData - 2 arrays packed together using the "encodePacked" web3js function.
            The first array is the investors addresses, the second one is the array
@@ -225,7 +221,6 @@ contract IBank is Ownable {
 
   function registerBidResult(
     uint8 result,
-    address tokenAddress,
     uint256 _tokenId,
     bytes calldata investorData)
     external;
@@ -241,14 +236,12 @@ contract IBank is Ownable {
          the address of the new contract and how many portions of LAND
          were created.
 
-  * @param _tokenAddress - Address of the ERC721 LAND token
   * @param _tokenId - The id of the LAND we want to invest in
   * @param landParts - Needs to be less than or equal to MAX_LAND_SPLITS
                        Tells the newly created SplitLand contract in how
                        many smaller parts we divided the LAND
   **/
   function generalSplitLand(
-    address _tokenAddress,
     uint256 _tokenId,
     uint256 landParts)
     external;

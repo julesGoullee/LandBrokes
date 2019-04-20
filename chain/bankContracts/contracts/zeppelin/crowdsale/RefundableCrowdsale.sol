@@ -1,9 +1,9 @@
 pragma solidity 0.5.7;
 
 
-import '../SafeMath.sol';
-import './FinalizableCrowdsale.sol';
-import './RefundVault.sol';
+import 'contracts/zeppelin/SafeMath.sol';
+import 'contracts/zeppelin/crowdsale/FinalizableCrowdsale.sol';
+import 'contracts/zeppelin/crowdsale/RefundVault.sol';
 
 
 /**

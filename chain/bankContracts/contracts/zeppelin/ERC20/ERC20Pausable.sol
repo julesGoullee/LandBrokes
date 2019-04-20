@@ -9,22 +9,22 @@ import "contracts/zeppelin/Pausable.sol";
  */
 contract ERC20Pausable is ERC20, Pausable {
     function transfer(address to, uint256 value) public whenNotPaused returns (bool) {
-        return super.transfer(to, value);
+        return transfer(to, value);
     }
 
     function transferFrom(address from, address to, uint256 value) public whenNotPaused returns (bool) {
-        return super.transferFrom(from, to, value);
+        return transferFrom(from, to, value);
     }
 
     function approve(address spender, uint256 value) public whenNotPaused returns (bool) {
-        return super.approve(spender, value);
+        return approve(spender, value);
     }
 
     function increaseAllowance(address spender, uint addedValue) public whenNotPaused returns (bool) {
-        return super.increaseAllowance(spender, addedValue);
+        return increaseAllowance(spender, addedValue);
     }
 
     function decreaseAllowance(address spender, uint subtractedValue) public whenNotPaused returns (bool) {
-        return super.decreaseAllowance(spender, subtractedValue);
+        return decreaseAllowance(spender, subtractedValue);
     }
 }

@@ -11,34 +11,34 @@ contract Bank is IBank, ContractDetector {
 
   constructor(
     string memory manaTicker,
-    uint256 maxLandOwners,
-    uint256 max_land_splits,
+    uint8 maxLandOwners,
+    uint16 max_land_splits,
     uint256 maxBidDuration,
-    uint256 noActionCancelBidAfter,
+    uint256 _noActionCancelAfter,
     address _manaToken,
     address _landToken,
-    address _decentralandBid) {
+    address _decentralandBid) public {
 
       require(maxLandOwners > 0, "You need a positive number of land owners");
       require(max_land_splits > 0, "You need a positive number of land splits");
-      require(maxBidDurationlandIsInBank > 0, "The bid duration needs to be positive");
-      require(noActionCancelBidAfter > 0, "noActionCancelBidAfter has to be positive");
+      require(maxBidDuration > 0, "The bid duration needs to be positive");
+      require(_noActionCancelAfter > 0, "_noActionCancelAfter has to be positive");
       require(isContract(_manaToken) == true, "The _manaToken is not a contract address");
       require(isContract(_landToken) == true, "The _landToken is not a contract address");
       require(isContract(_decentralandBid) == true, "The _decentralandBid is not a contract address");
 
-      MANA = keccak256(manaTicker);
+      MANA = keccak256(abi.encode(manaTicker));
       MAX_LAND_OWNERS = maxLandOwners;
       MAX_LAND_SPLITS = max_land_splits;
       BID_DURATION = maxBidDuration;
-      NO_ACTION_CANCEL_BID_AFTER = noActionCancelBidAfter;
+      NO_ACTION_CANCEL_BID_AFTER = _noActionCancelAfter;
       manaToken = MANAToken(_manaToken);
       landAddress = _landToken;
       decentralandBid = Bid(_decentralandBid);
 
     }
 
-    function changeMaxLandOwners(uint256 maxLandOwners) external onlyOwner {
+    function changeMaxLandOwners(uint8 maxLandOwners) external onlyOwner {
 
       require(maxLandOwners > 0, "You need a positive number of land owners");
 
@@ -46,7 +46,7 @@ contract Bank is IBank, ContractDetector {
 
     }
 
-    function changeMaxLandSplits(uint256 max_land_splits) external onlyOwner {
+    function changeMaxLandSplits(uint16 max_land_splits) external onlyOwner {
 
       require(max_land_splits > 0, "You need a positive number of land splits");
 
@@ -62,11 +62,11 @@ contract Bank is IBank, ContractDetector {
 
     }
 
-    function changeNoActionCancelTime() external onlyOwner {
+    function changeNoActionCancelTime(uint256 _noActionCancelAfter) external onlyOwner {
 
-      require(noActionCancelBidAfter > 0, "noActionCancelBidAfter has to be positive");
+      require(_noActionCancelAfter > 0, "_noActionCancelAfter has to be positive");
 
-      NO_ACTION_CANCEL_BID_AFTER = noActionCancelBidAfter;
+      NO_ACTION_CANCEL_BID_AFTER = _noActionCancelAfter;
 
     }
 
@@ -74,7 +74,7 @@ contract Bank is IBank, ContractDetector {
       uint8 investmentType,
       uint256 landId,
       address[] calldata investors,
-      address[] calldata _amountsInvested)
+      uint256[] calldata _amountsInvested)
       external {
 
       require(investmentType <= 1, "The investment type needs to be between bounds");

@@ -5,13 +5,6 @@ import "contracts/zeppelin/Pausable.sol";
 
 contract Bid is Ownable {
 
-   /**
-    * @dev Constructor of the contract.
-    * @param _manaToken - address of the mana token
-    * @param _owner - address of the owner for the contract
-    */
-    constructor(address _manaToken, address _owner) Ownable() Pausable() public;
-
     /**
     * @dev Place a bid for an ERC721 token.
     * @param _tokenAddress - address of the ERC721 token
@@ -40,7 +33,7 @@ contract Bid is Ownable {
         uint256 _tokenId,
         uint256 _price,
         uint256 _duration,
-        bytes _fingerprint
+        bytes memory _fingerprint
     )
         public;
 
@@ -63,8 +56,7 @@ contract Bid is Ownable {
         uint256 _duration,
         bytes memory _fingerprint
     )
-        private
-        whenNotPaused();
+        private;
 
     /**
     * @dev Used as the only way to accept a bid.
@@ -90,7 +82,6 @@ contract Bid is Ownable {
         bytes memory _data
     )
         public
-        whenNotPaused()
         returns (bytes4);
 
     /**
@@ -99,7 +90,10 @@ contract Bid is Ownable {
     * @param _tokenIds - uint256[] of the token ids
     * @param _bidders - address[] of the bidders
     */
-    function removeExpiredBids(address[] _tokenAddresses, uint256[] _tokenIds, address[] _bidders)
+    function removeExpiredBids(
+      address[] memory _tokenAddresses,
+      uint256[] memory _tokenIds,
+      address[] memory _bidders)
     public;
 
     /**
@@ -116,7 +110,7 @@ contract Bid is Ownable {
     * @param _tokenAddress - address of the ERC721 token
     * @param _tokenId - uint256 of the token id
     */
-    function cancelBid(address _tokenAddress, uint256 _tokenId) public whenNotPaused();
+    function cancelBid(address _tokenAddress, uint256 _tokenId) public;
 
     /**
     * @dev Cancel a bid for an ERC721 token
@@ -197,14 +191,14 @@ contract Bid is Ownable {
     function _getBid(address _tokenAddress, uint256 _tokenId, uint256 _index)
         internal
         view
-        returns (Bid memory);
+        returns (Bid);
 
     /**
     * @dev Sets the share cut for the owner of the contract that's
     * charged to the seller on a successful sale
     * @param _ownerCutPerMillion - Share amount, from 0 to 999,999
     */
-    function setOwnerCutPerMillion(uint256 _ownerCutPerMillion) external onlyOwner;
+    function setOwnerCutPerMillion(uint256 _ownerCutPerMillion) external;
 
     /**
     * @dev Convert bytes to bytes32

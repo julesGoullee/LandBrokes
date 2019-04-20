@@ -1,8 +1,8 @@
 pragma solidity 0.5.7;
 
-import '../SafeMath.sol';
-import '../ownership/Ownable.sol';
-import './Crowdsale.sol';
+import 'contracts/zeppelin/SafeMath.sol';
+import 'contracts/zeppelin/ownership/Ownable.sol';
+import 'contracts/zeppelin/crowdsale/Crowdsale.sol';
 
 /**
  * @title FinalizableCrowdsale
@@ -24,7 +24,7 @@ contract FinalizableCrowdsale is Crowdsale, Ownable {
 
     finalization();
     emit Finalized();
-    
+
     isFinalized = true;
   }
 

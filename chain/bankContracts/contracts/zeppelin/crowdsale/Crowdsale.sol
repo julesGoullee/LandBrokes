@@ -1,14 +1,14 @@
 pragma solidity 0.5.7;
 
-import '../ERC20/MintableToken.sol';
-import '../SafeMath.sol';
+import 'contracts/zeppelin/ERC20/MintableToken.sol';
+import 'contracts/zeppelin/SafeMath.sol';
 
 /**
- * @title Crowdsale 
+ * @title Crowdsale
  * @dev Crowdsale is a base contract for managing a token crowdsale.
  * Crowdsales have a start and end block, where investors can make
  * token purchases and the crowdsale will assign them tokens based
- * on a token per ETH rate. Funds collected are forwarded to a wallet 
+ * on a token per ETH rate. Funds collected are forwarded to a wallet
  * as they arrive.
  */
 contract Crowdsale {
@@ -36,7 +36,7 @@ contract Crowdsale {
    * @param beneficiary who got the tokens
    * @param value weis paid for purchase
    * @param amount amount of tokens purchased
-   */ 
+   */
   event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
 
@@ -53,7 +53,7 @@ contract Crowdsale {
     wallet = _wallet;
   }
 
-  // creates the token to be sold. 
+  // creates the token to be sold.
   // override this method to have crowdsale of a specific mintable token.
   function createTokenContract() internal returns (MintableToken) {
     return new MintableToken();

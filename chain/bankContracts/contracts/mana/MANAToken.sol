@@ -4,7 +4,7 @@ import "contracts/zeppelin/ERC20/ERC20Pausable.sol";
 import "contracts/zeppelin/ERC20/MintableToken.sol";
 import "contracts/mana/BurnableToken.sol";
 
-contract MANAToken is BurnableToken, PausableToken, MintableToken {
+contract MANAToken is BurnableToken, ERC20Pausable, MintableToken {
 
     string public constant symbol = "MANA";
 
