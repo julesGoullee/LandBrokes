@@ -9,6 +9,32 @@ contract Bank is IBank, ContractDetector {
   using SafeMath for uint256;
   using SafeMath for int256;
 
+  modifier checkBeforeBuying(uint8 investmentType,
+                             uint256 investorsLength,
+                             uint256 amountsInvestedLength,
+                             uint256 landId) {
+
+    require(investmentType <= 1, "The investment type needs to be between bounds");
+    require(investorsLength == amountsInvestedLength,
+      "The investors and _amountsInvested arrays do not have the same length");
+    require(landIsInBank[landId] == false, "The land specified is already owned by the bank");
+
+    if (investmentType == 0) {
+
+      require(investorsLength == 1,
+        "With a whole investment there needs to be only 1 investor");
+
+    } else if (investmentType == 1) {
+
+      require(investorsLength >= 0,
+        "With a split investment there needs to be a positive amount of investors");
+
+    }
+
+    _;
+
+  }
+
   constructor(
     string memory manaTicker,
     uint8 maxLandOwners,
@@ -72,32 +98,12 @@ contract Bank is IBank, ContractDetector {
       uint256 landId,
       address[] calldata investors,
       uint256[] calldata _amountsInvested)
-      external {
+      external
+      onlyOwner()
+      checkBeforeBuying(investmentType, investors.length,
+                        _amountsInvested.length, landId) {
 
-      require(investmentType <= 1, "The investment type needs to be between bounds");
-      require(investors.length == _amountsInvested.length,
-        "The investors and _amountsInvested arrays do not have the same length");
-      require(landIsInBank[landId] == false, "The land specified is already owned by the bank");
-
-      if (investmentType == 0) {
-
-        require(investors.length == 1,
-          "With a whole investment there needs to be only 1 investor");
-
-      } else if (investmentType == 1) {
-
-        require(investors.length >= 0,
-          "With a split investment there needs to be a positive amount of investors");
-
-      }
-
-      uint256 totalToInvest = 0;
-
-      for (uint i = 0; i < _amountsInvested.length; i++) {
-
-        totalToInvest = totalToInvest.add(_amountsInvested[i]);
-
-      }
+      uint256 totalToInvest = computeTotalInvested(_amountsInvested);
 
       if (investmentType == 0) {
 
@@ -121,8 +127,8 @@ contract Bank is IBank, ContractDetector {
 
         for (uint j = 0; j < investors.length; j++) {
 
-          wholeBalances[investors[j]][MANA] =
-            wholeBalances[investors[j]][MANA].sub(_amountsInvested[j]);
+          splitBalances[investors[j]][MANA] =
+            splitBalances[investors[j]][MANA].sub(_amountsInvested[j]);
 
           lockedForBidding[investors[j]][MANA] =
             lockedForBidding[investors[j]][MANA].add(_amountsInvested[j]);
@@ -152,6 +158,135 @@ contract Bank is IBank, ContractDetector {
 
     }
 
+    function directBuyLand(
+      address marketplace,
+      uint8 investmentType,
+      uint256 landId,
+      address[] calldata investors,
+      uint256[] calldata _amountsInvested
+    ) external onlyOwner()
+      checkBeforeBuying(investmentType, investors.length,
+                      _amountsInvested.length, landId) {
+
+      uint256 totalToInvest = computeTotalInvested(_amountsInvested);
+
+      if (investmentType == 0) {
+
+        require(wholeLandMANAFunds >= totalToInvest,
+          "The is not enough MANA for whole investments");
+
+        wholeLandMANAFunds = wholeLandMANAFunds.sub(totalToInvest);
+
+        wholeBalances[investors[0]][MANA] =
+          wholeBalances[investors[0]][MANA].sub(_amountsInvested[0]);
+
+      } else if (investmentType == 1) {
+
+        require(splitLandMANAFunds >= totalToInvest,
+          "The is not enough MANA for split investments");
+
+        splitLandMANAFunds = splitLandMANAFunds.sub(totalToInvest);
+
+        for (uint j = 0; j < investors.length; j++) {
+
+          splitBalances[investors[j]][MANA] =
+            splitBalances[investors[j]][MANA].sub(_amountsInvested[j]);
+
+        }
+
+      }
+
+      //Mitigate front-running
+      manaToken.approve(marketplace, 0);
+
+      //Allow the bid contract to get MANA from this contract
+      require(manaToken.approve(marketplace, totalToInvest) == true,
+        "Could not approve MANA to directly buy LAND");
+
+      bool status;
+      bytes memory result;
+
+      //Call the executeOrder function from the marketplace
+      (status, result) = marketplace.call(
+              abi.encode(
+              bytes4(keccak256("executeOrder(address, uint256, uint256)")),
+              landAddress,
+              landId, totalToInvest));
+
+      require(status == true, "Could not buy LAND");
+
+      bytes memory encodedInvestors =
+        abi.encode(investors, _amountsInvested, investmentType);
+
+      unassignedLand[landId] = encodedInvestors;
+
+      emit BoughtLand(landId);
+
+    }
+
+    function assignLand(uint256 unassignedLandId) external onlyOwner() {
+
+      address[] memory investors;
+      uint256[] memory money;
+      uint8 investmentType;
+
+      (investors, money, investmentType) =
+        abi.decode(unassignedLand[unassignedLandId],
+                   (address[], uint256[], uint8));
+
+      if (investmentType == 0) {
+
+
+
+      } else {
+
+
+
+      }
+
+    }
+
+    function depositMANA(uint8 balanceType, address _target, uint256 _amount) external {
+
+      require(manaToken.balanceOf(msg.sender) >= _amount,
+        "You do not have that much MANA to deposit");
+
+      require(balanceType <= 1, "The balance type needs to be 0 or 1");
+
+      manaToken.transferFrom(msg.sender, address(this), _amount);
+
+      if (balanceType == 0) {
+
+        wholeBalances[_target][MANA] =
+          wholeBalances[_target][MANA].add(_amount);
+
+      } else {
+
+        splitBalances[_target][MANA] =
+          splitBalances[_target][MANA].add(_amount);
+
+      }
+
+      emit DepositedMANA(balanceType, msg.sender, _target, _amount);
+
+    }
+
     
+
+    //PRIVATE
+
+    function computeTotalInvested(uint256[] memory _amountsInvested) private pure returns (uint256) {
+
+      uint256 totalToInvest = 0;
+
+      for (uint i = 0; i < _amountsInvested.length; i++) {
+
+        totalToInvest = totalToInvest.add(_amountsInvested[i]);
+
+      }
+
+      return totalToInvest;
+
+    }
 
 }

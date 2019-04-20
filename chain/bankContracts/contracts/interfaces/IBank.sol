@@ -11,6 +11,8 @@ contract IBank is Ownable {
   event ProcessedBid(uint256 landId, uint256 totalBid, uint256 duration);
   event CancelledBid(uint256 _tokenId);
   event BoughtLand(uint256 landId);
+  event DepositedMANA(uint8 depositType, address caller, address target, uint256 amount);
+  event WithdrewMANA(uint8 depositType, address caller, uint256 amount);
   event Deposited(uint256 timestamp, bytes depositType, uint256 amount, address who);
   event Withdrew(uint256 timestamp, bytes withdrawalType, uint256 amount, address who);
   event RegisteredBidResult(uint8 result, address tokenAddress,
@@ -93,6 +95,8 @@ contract IBank is Ownable {
   //Telling if a LAND is in the Bank
   mapping(uint256 => bool) landIsInBank;
 
+  mapping(uint256 => bytes) unassignedLand;
+
   enum BID_RESULT {ONGOING, SUCCESSFUL, FAILED, CANCELLED}
 
   enum BALANCE_TYPE {SPLIT, WHOLE}
@@ -164,14 +168,27 @@ contract IBank is Ownable {
     external;
 
   /**
-  * Buy land directly without going through the bid process. Params are similar to bidForLand
+  * Buy land directly without going through the bid process.
+  * Params are similar to bidForLand apart from marketplace which is the contract
+  * where we can buy LAND directly
   **/
   function directBuyLand(
+    address marketplace,
     uint8 investmentType,
     uint256 landId,
     address[] calldata investors,
-    address[] calldata _amountsInvested
+    uint256[] calldata _amountsInvested
   ) external;
+
+  //Needs onlyOwner
+
+  /**
+  * This function is used to assign land after buying it
+
+  * @param unassignedLandId - The id of the LAND which is not assigned
+  **/
+
+  function assignLand(uint256 unassignedLandId) external;
 
   /**
   * @dev Cancel a bid. This function can only be triggered from registerBidResult
