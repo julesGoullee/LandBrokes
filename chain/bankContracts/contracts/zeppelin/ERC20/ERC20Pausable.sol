@@ -1,7 +1,7 @@
 pragma solidity 0.5.7;
 
-import "./ERC20/ERC20.sol";
-import "../Pausable.sol";
+import "contracts/zeppelin/ERC20/ERC20.sol";
+import "contracts/zeppelin/Pausable.sol";
 
 /**
  * @title Pausable token

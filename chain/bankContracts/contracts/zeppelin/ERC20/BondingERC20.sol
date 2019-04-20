@@ -1,7 +1,7 @@
 pragma solidity 0.5.7;
 
-import "./IBondingERC20.sol";
-import "../SafeMath.sol";
+import "contracts/zeppelin/ERC20/IBondingERC20.sol";
+import "contracts/zeppelin/SafeMath.sol";
 
 /**
  * @title Standard ERC20 token

@@ -1,7 +1,7 @@
 pragma solidity 0.5.7;
 
-import "./StandardToken.sol";
-import "../ownership/Ownable.sol";
+import "contracts/zeppelin/ERC20/StandardToken.sol";
+import "contracts/zeppelin/ownership/Ownable.sol";
 
 
 /**

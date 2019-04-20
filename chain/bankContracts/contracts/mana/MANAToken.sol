@@ -1,8 +1,8 @@
 pragma solidity 0.5.7;
 
-import "../zeppelin/ERC20/ERC20Pausable.sol";
-import "../zeppelin/ERC20/MintableToken.sol";
-import "./BurnableToken.sol";
+import "contracts/zeppelin/ERC20/ERC20Pausable.sol";
+import "contracts/zeppelin/ERC20/MintableToken.sol";
+import "contracts/mana/BurnableToken.sol";
 
 contract MANAToken is BurnableToken, ERC20Pausable, MintableToken {
 
