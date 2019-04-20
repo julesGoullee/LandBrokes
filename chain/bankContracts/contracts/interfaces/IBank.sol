@@ -61,6 +61,9 @@ contract IBank {
   //Address of MANA token
   MANAToken manaToken;
 
+  //Land registru address
+  address landRegistry;
+
   //The address of the LAND ERC721
   address landAddress;
 

@@ -43,14 +43,33 @@ contract Bank is IBank, Ownable {
   }
 
   constructor(
-    string memory manaTicker,
+    /*string memory manaTicker,
     uint8 maxLandOwners,
     uint16 max_land_splits,
     uint256 maxBidDuration,
     uint256 _noActionCancelAfter,
     address _manaToken,
     address _landToken,
-    address _decentralandBid) public {
+    address _decentralandBid,
+    address _landRegistry*/
+    bytes memory initializationData
+  ) public {
+
+      string memory manaTicker;
+      uint8 maxLandOwners;
+      uint16 max_land_splits;
+      uint256 maxBidDuration;
+      uint256 _noActionCancelAfter;
+      address _manaToken;
+      address _landToken;
+      address _decentralandBid;
+      address _landRegistry;
+
+      (manaTicker, maxLandOwners, max_land_splits,
+      maxBidDuration, _noActionCancelAfter, _manaToken,
+      _landToken, _decentralandBid, _landRegistry) =
+      abi.decode(initializationData,
+      (string, uint8, uint16, uint256, uint256, address, address, address, address));
 
       require(maxLandOwners > 0, "You need a positive number of land owners");
       require(max_land_splits > 0, "You need a positive number of land splits");
@@ -64,6 +83,7 @@ contract Bank is IBank, Ownable {
       NO_ACTION_CANCEL_BID_AFTER = _noActionCancelAfter;
       manaToken = MANAToken(_manaToken);
       landAddress = _landToken;
+      landRegistry = _landRegistry;
       //decentralandBid = IBid(_decentralandBid);
 
       decentralandBid = _decentralandBid;
@@ -259,7 +279,18 @@ contract Bank is IBank, Ownable {
 
       if (investmentType == 0) {
 
+        bool status;
+        bytes memory result;
 
+        //Call the executeOrder function from the marketplace
+        (status, result) = landRegistry.call(
+                abi.encode(
+                bytes4(keccak256("transferFrom(address, address, uint256)")),
+                address(this),
+                investors[0],
+                unassignedLandId));
+
+        require(status == true, "Could not transfer the whole LAND to the investor");
 
       } else {
 
