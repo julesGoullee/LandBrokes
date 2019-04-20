@@ -1,4 +1,4 @@
-pragma solidity 0.5.7;
+pragma solidity ^0.5.7;
 
 import "contracts/interfaces/IBank.sol";
 import "contracts/zeppelin/ContractDetector.sol";
