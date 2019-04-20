@@ -1,8 +1,8 @@
 pragma solidity 0.5.7;
 
-import '../zeppelin/ERC20/StandardToken.sol';
+import "../../node_modules/openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
-contract ISplitLand is StandardToken {
+contract ISplitLand is ERC20 {
 
   /**
   *  When a new SplitLand contract is created, in the constructor,

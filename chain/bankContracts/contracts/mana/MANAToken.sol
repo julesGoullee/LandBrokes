@@ -1,10 +1,10 @@
 pragma solidity 0.5.7;
 
-import "contracts/zeppelin/ERC20/ERC20Pausable.sol";
-import "contracts/zeppelin/ERC20/MintableToken.sol";
-import "contracts/mana/BurnableToken.sol";
+import "../../node_modules/openzeppelin-solidity/contracts/token/ERC20/ERC20Pausable.sol";
+import "../../node_modules/openzeppelin-solidity/contracts/token/ERC20/ERC20Mintable.sol";
+import "../../node_modules/openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol";
 
-contract MANAToken is BurnableToken, ERC20Pausable, MintableToken {
+contract MANAToken is ERC20Mintable, ERC20Pausable, ERC20Burnable {
 
     string public constant symbol = "MANA";
 

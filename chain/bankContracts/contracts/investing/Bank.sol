@@ -1,13 +1,20 @@
 pragma solidity ^0.5.7;
 
+//import "./.././interfaces/IBid.sol";
 import "./.././interfaces/IBank.sol";
-import "./.././zeppelin/ContractDetector.sol";
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "../../node_modules/openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "../../node_modules/openzeppelin-solidity/contracts/utils/Address.sol";
+import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 
-contract Bank is IBank, ContractDetector {
+contract Bank is IBank, Ownable {
 
   using SafeMath for uint256;
   using SafeMath for int256;
+  using Address for address;
+
+  //IBid decentralandBid;
+
+  address decentralandBid;
 
   modifier checkBeforeBuying(uint8 investmentType,
                              uint256 investorsLength,
@@ -57,7 +64,9 @@ contract Bank is IBank, ContractDetector {
       NO_ACTION_CANCEL_BID_AFTER = _noActionCancelAfter;
       manaToken = MANAToken(_manaToken);
       landAddress = _landToken;
-      decentralandBid = Bid(_decentralandBid);
+      //decentralandBid = IBid(_decentralandBid);
+
+      decentralandBid = _decentralandBid;
 
     }
 
@@ -138,21 +147,35 @@ contract Bank is IBank, ContractDetector {
       }
 
       uint256 currentlyApproved =
-        manaToken.allowance(address(this), address(decentralandBid));
+        manaToken.allowance(address(this), decentralandBid);
 
       //Mitigate front-running
-      manaToken.approve(address(decentralandBid), 0);
+      manaToken.approve(decentralandBid, 0);
 
       //Allow the bid contract to get MANA from this contract
-      manaToken.approve(address(decentralandBid),
+      manaToken.approve(decentralandBid,
                         currentlyApproved.add(totalToInvest));
 
-      decentralandBid.placeBid(
+      bool status;
+      bytes memory result;
+
+      //Call the executeOrder function from the marketplace
+      (status, result) = decentralandBid.call(
+              abi.encode(
+              bytes4(keccak256("placeBid(address, uint256, uint256, uint256)")),
+              landAddress,
+              landId,
+              totalToInvest,
+              BID_DURATION));
+
+      /*decentralandBid.placeBid(
         landAddress,
         landId,
         totalToInvest,
         BID_DURATION
-      );
+      );*/
+
+      require(status == true, "Could not bid for LAND");
 
       emit ProcessedBid(landId, totalToInvest, BID_DURATION);
 
@@ -164,7 +187,7 @@ contract Bank is IBank, ContractDetector {
       uint256 landId,
       address[] calldata investors,
       uint256[] calldata _amountsInvested
-    ) external onlyOwner()
+    ) external onlyOwner
       checkBeforeBuying(investmentType, investors.length,
                       _amountsInvested.length, landId) {
 
@@ -224,7 +247,7 @@ contract Bank is IBank, ContractDetector {
 
     }
 
-    function assignLand(uint256 unassignedLandId) external onlyOwner() {
+    function assignLand(uint256 unassignedLandId) external onlyOwner {
 
       address[] memory investors;
       uint256[] memory money;

@@ -1,9 +1,9 @@
 pragma solidity 0.5.7;
 
-import "contracts/zeppelin/ownership/Ownable.sol";
-import "contracts/zeppelin/Pausable.sol";
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "openzeppelin-solidity/contracts/lifecycle/Pausable.sol";
 
-contract Bid is Ownable {
+contract IBid is Ownable {
 
     /**
     * @dev Place a bid for an ERC721 token.
@@ -188,10 +188,10 @@ contract Bid is Ownable {
     * @param _index - address of the bidder
     * @return Bid
     */
-    function _getBid(address _tokenAddress, uint256 _tokenId, uint256 _index)
+  /*  function _getBid(address _tokenAddress, uint256 _tokenId, uint256 _index)
         internal
         view
-        returns (Bid);
+        returns (Bid);*/
 
     /**
     * @dev Sets the share cut for the owner of the contract that's

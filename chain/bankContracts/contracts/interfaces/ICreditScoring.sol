@@ -1,6 +1,6 @@
 pragma solidity 0.5.7;
 
-import "../zeppelin/ownership/Ownable.sol";
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 contract ICreditScoring is Ownable {
 

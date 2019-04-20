@@ -1,10 +1,8 @@
 pragma solidity 0.5.7;
 
-import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
 import "./.././mana/MANAToken.sol";
-import "./.././interfaces/Bid.sol";
 
-contract IBank is Ownable {
+contract IBank {
 
   //Functions having onlyOwner are managed by our backend
 
@@ -62,8 +60,6 @@ contract IBank is Ownable {
 
   //Address of MANA token
   MANAToken manaToken;
-
-  Bid decentralandBid;
 
   //The address of the LAND ERC721
   address landAddress;
