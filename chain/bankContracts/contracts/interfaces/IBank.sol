@@ -7,12 +7,10 @@ contract IBank {
   //Functions having onlyOwner are managed by our backend
 
   event ProcessedBid(uint256 landId, uint256 totalBid, uint256 duration);
-  event CancelledBid(uint256 bidPosition);
   event BoughtLand(uint256 landId);
   event DepositedMANA(uint8 depositType, address caller, address target, uint256 amount);
   event WithdrewMANA(uint8 depositType, address caller, uint256 amount);
-  event RegisteredBidResult(uint8 result, address tokenAddress,
-    uint256 _tokenId, bytes investorData, address createdSplitLand);
+  event RegisteredBidResult(uint8 result, uint256 bidPosition);
   event SplitUnassignedLand(address _tokenAddress, uint256 _tokenId, uint256 parts);
   event TransferredUnassignedLand(address to, uint256 tokenId);
   event SplitExternalLand(address owner, address _tokenAddress,
@@ -30,6 +28,8 @@ contract IBank {
   struct BidData {
 
     bytes bidData;
+
+    uint256 landId;
 
     uint256 creationTimestamp;
 
@@ -190,14 +190,6 @@ contract IBank {
   function assignLand(uint256 unassignedLandId) external;
 
   /**
-  * @dev Cancel a bid. This function can only be triggered from registerBidResult
-  * @param bidPosition - The id of the LAND we previously bid for
-  **/
-  function cancelLandBid(
-    uint256 bidPosition)
-    internal;
-
-  /**
   * @dev Entrust the contract with MANA so it can be invested for you or for someone you deposit for
   * @param balanceType - 0 or 1 (SPLIT OR WHOLE)
   * @param _target - Who receives the MANA in their balance
@@ -227,18 +219,14 @@ contract IBank {
          in that LAND.
 
   * @param result - It can be 0, 1 or 2 (SUCCESSFUL, FAILED, CANCELLED)
-  * @param _tokenId - The id of the LAND we want to invest in
-  * @param investorData - 2 arrays packed together using the "encodePacked" web3js function.
-           The first array is the investors addresses, the second one is the array
-           specifying how many LAND parts each investor will get
+  * @param bidPosition - The position of the bid in the bids array
   **/
 
   //needs onlyOwner
 
   function registerBidResult(
     uint8 result,
-    uint256 _tokenId,
-    bytes calldata investorData)
+    uint256 bidPosition)
     external;
 
   /**

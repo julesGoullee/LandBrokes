@@ -17,6 +17,8 @@ contract Bank is IBank, Ownable {
 
   address decentralandBid;
 
+  bytes nullBytes = bytes("0");
+
   modifier checkBeforeBuying(uint8 investmentType,
                              uint256 investorsLength,
                              uint256 amountsInvestedLength,
@@ -38,6 +40,18 @@ contract Bank is IBank, Ownable {
         "With a split investment there needs to be a positive amount of investors");
 
     }
+
+    _;
+
+  }
+
+  modifier onlyOngoingBid(uint256 bidPosition) {
+
+    require(bidPosition < bids.length,
+        "The bid position is not within bounds");
+
+    require(bids[bidPosition].bidStatus == uint8(BID_RESULT.ONGOING),
+        "The bid is not ongoing");
 
     _;
 
@@ -133,6 +147,10 @@ contract Bank is IBank, Ownable {
       checkBeforeBuying(investmentType, investors.length,
                         _amountsInvested.length, landId) {
 
+      require(beingBid[landId] == false, "This LAND is already being bid on");
+
+      beingBid[landId] = true;
+
       uint256 totalToInvest = computeTotalInvested(_amountsInvested);
 
       if (investmentType == 0) {
@@ -201,7 +219,8 @@ contract Bank is IBank, Ownable {
       bytes memory encodedInvestors =
         abi.encode(investors, _amountsInvested);
 
-      BidData memory newBid = BidData(encodedInvestors, now, BID_RESULT.ONGOING);
+      BidData memory newBid =
+        BidData(encodedInvestors, landId, now, uint8(BID_RESULT.ONGOING));
 
       bids.push(newBid);
 
@@ -275,19 +294,9 @@ contract Bank is IBank, Ownable {
 
     }
 
-    function cancelLandBid(
-      uint256 bidPosition)
-      internal {
-
-      bids[bidPosition].bidStatus = BID_RESULT.CANCELLED;
-
-      emit CancelledBid(bidPosition);
-
-    }
-
     function assignLand(uint256 unassignedLandId) external onlyOwner {
 
-      require(unassignedLand[unassignedLandId] != bytes(0),
+      require(keccak256(unassignedLand[unassignedLandId]) != keccak256(nullBytes),
         "This land was already assigned");
 
       address[] memory investors;
@@ -302,7 +311,7 @@ contract Bank is IBank, Ownable {
               && money.length == investors.length,
               "The arrays do not have valid lengths");
 
-      unassignedLand[unassignedLandId] = bytes(0);
+      unassignedLand[unassignedLandId] = nullBytes;
 
       if (investors.length == 1) {
 
@@ -324,7 +333,7 @@ contract Bank is IBank, Ownable {
       } else {
 
         address newSplitLand =
-          new SplitLand(investors, money, MAX_LAND_SPLITS, unassignedLandId);
+          address(new SplitLand(investors, money, MAX_LAND_SPLITS, unassignedLandId));
 
         Land memory newLandData = Land(newSplitLand, MAX_LAND_SPLITS);
 
@@ -395,6 +404,64 @@ contract Bank is IBank, Ownable {
         "Could not transfer money in the withdraw function");
 
       emit WithdrewMANA(balanceType, msg.sender, _amount);
+
+    }
+
+    function registerBidResult(
+      uint8 result,
+      uint256 bidPosition)
+      external onlyOngoingBid(bidPosition) {
+
+      require(result <= 3 && result > 0, "The result is not within bounds");
+
+      bids[bidPosition].bidStatus = result;
+
+      address[] memory investors;
+      uint256[] memory money;
+
+      (investors, money) =
+        abi.decode(bids[bidPosition].bidData,
+                   (address[], uint256[]));
+
+      if (result == uint8(BID_RESULT.CANCELLED) ||
+          result == uint8(BID_RESULT.FAILED)) {
+
+        if (investors.length == 1) {
+
+          lockedForBidding[investors[0]][MANA] =
+            lockedForBidding[investors[0]][MANA].sub(money[0]);
+
+          wholeBalances[investors[0]][MANA] =
+            wholeBalances[investors[0]][MANA].add(money[0]);
+
+        } else {
+
+          for (uint i = 0; i < investors.length; i++) {
+
+            lockedForBidding[investors[i]][MANA] =
+              lockedForBidding[investors[i]][MANA].sub(money[i]);
+
+            splitBalances[investors[i]][MANA] =
+              splitBalances[investors[i]][MANA].add(money[i]);
+
+          }
+
+        }
+
+      } else if (result == uint8(BID_RESULT.SUCCESSFUL)) {
+
+        for (uint i = 0; i < investors.length; i++) {
+
+          lockedForBidding[investors[i]][MANA] =
+            lockedForBidding[investors[i]][MANA].sub(money[i]);
+
+        }
+
+        unassignedLand[bids[bidPosition].landId] = bids[bidPosition].bidData;
+
+      }
+
+      emit RegisteredBidResult(result, bidPosition);
 
     }
 
