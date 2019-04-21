@@ -7,14 +7,14 @@ contract IBank {
   //Functions having onlyOwner are managed by our backend
 
   event ProcessedBid(uint256 landId, uint256 totalBid, uint256 duration);
-  event CancelledBid(uint256 _tokenId);
+  event CancelledBid(uint256 bidPosition);
   event BoughtLand(uint256 landId);
   event DepositedMANA(uint8 depositType, address caller, address target, uint256 amount);
   event WithdrewMANA(uint8 depositType, address caller, uint256 amount);
-  event Deposited(uint256 timestamp, bytes depositType, uint256 amount, address who);
-  event Withdrew(uint256 timestamp, bytes withdrawalType, uint256 amount, address who);
   event RegisteredBidResult(uint8 result, address tokenAddress,
     uint256 _tokenId, bytes investorData, address createdSplitLand);
+  event SplitUnassignedLand(address _tokenAddress, uint256 _tokenId, uint256 parts);
+  event TransferredUnassignedLand(address to, uint256 tokenId);
   event SplitExternalLand(address owner, address _tokenAddress,
     uint256 _tokenId, uint256 parts);
   event ReconstructedLand(uint256 id, address caller, address reconstructedLandReceiver);
@@ -191,10 +191,10 @@ contract IBank {
 
   /**
   * @dev Cancel a bid. This function can only be triggered from registerBidResult
-  * @param _tokenId - The id of the LAND we previously bid for
+  * @param bidPosition - The id of the LAND we previously bid for
   **/
   function cancelLandBid(
-    uint256 _tokenId)
+    uint256 bidPosition)
     internal;
 
   /**

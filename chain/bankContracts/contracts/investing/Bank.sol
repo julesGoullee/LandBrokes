@@ -1,6 +1,7 @@
-pragma solidity ^0.5.7;
+pragma solidity 0.5.7;
 
 //import "./.././interfaces/IBid.sol";
+import "./.././investing/SplitLand.sol";
 import "./.././interfaces/IBank.sol";
 import "../../node_modules/openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../../node_modules/openzeppelin-solidity/contracts/utils/Address.sol";
@@ -128,7 +129,7 @@ contract Bank is IBank, Ownable {
       address[] calldata investors,
       uint256[] calldata _amountsInvested)
       external
-      onlyOwner()
+      onlyOwner
       checkBeforeBuying(investmentType, investors.length,
                         _amountsInvested.length, landId) {
 
@@ -197,6 +198,13 @@ contract Bank is IBank, Ownable {
 
       require(status == true, "Could not bid for LAND");
 
+      bytes memory encodedInvestors =
+        abi.encode(investors, _amountsInvested);
+
+      BidData memory newBid = BidData(encodedInvestors, now, BID_RESULT.ONGOING);
+
+      bids.push(newBid);
+
       emit ProcessedBid(landId, totalToInvest, BID_DURATION);
 
     }
@@ -259,7 +267,7 @@ contract Bank is IBank, Ownable {
       require(status == true, "Could not buy LAND");
 
       bytes memory encodedInvestors =
-        abi.encode(investors, _amountsInvested, investmentType);
+        abi.encode(investors, _amountsInvested);
 
       unassignedLand[landId] = encodedInvestors;
 
@@ -267,17 +275,36 @@ contract Bank is IBank, Ownable {
 
     }
 
+    function cancelLandBid(
+      uint256 bidPosition)
+      internal {
+
+      bids[bidPosition].bidStatus = BID_RESULT.CANCELLED;
+
+      emit CancelledBid(bidPosition);
+
+    }
+
     function assignLand(uint256 unassignedLandId) external onlyOwner {
+
+      require(unassignedLand[unassignedLandId] != bytes(0),
+        "This land was already assigned");
 
       address[] memory investors;
       uint256[] memory money;
-      uint8 investmentType;
 
-      (investors, money, investmentType) =
+      (investors, money) =
         abi.decode(unassignedLand[unassignedLandId],
-                   (address[], uint256[], uint8));
+                   (address[], uint256[]));
 
-      if (investmentType == 0) {
+      require(investors.length >= 1
+              && money.length >= 1
+              && money.length == investors.length,
+              "The arrays do not have valid lengths");
+
+      unassignedLand[unassignedLandId] = bytes(0);
+
+      if (investors.length == 1) {
 
         bool status;
         bytes memory result;
@@ -292,9 +319,18 @@ contract Bank is IBank, Ownable {
 
         require(status == true, "Could not transfer the whole LAND to the investor");
 
+        emit TransferredUnassignedLand(investors[0], unassignedLandId);
+
       } else {
 
+        address newSplitLand =
+          new SplitLand(investors, money, MAX_LAND_SPLITS, unassignedLandId);
 
+        Land memory newLandData = Land(newSplitLand, MAX_LAND_SPLITS);
+
+        landDetails[unassignedLandId] = newLandData;
+
+        emit SplitUnassignedLand(newSplitLand, unassignedLandId, MAX_LAND_SPLITS);
 
       }
 
