@@ -5,6 +5,7 @@ import "./.././investing/SplitLand.sol";
 import "./.././interfaces/IBank.sol";
 import "../../node_modules/openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../../node_modules/openzeppelin-solidity/contracts/utils/Address.sol";
+import "../../node_modules/openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 contract Bank is IBank, Ownable {
@@ -285,6 +286,8 @@ contract Bank is IBank, Ownable {
 
       require(status == true, "Could not buy LAND");
 
+      landIsInBank[landId] = true;
+
       bytes memory encodedInvestors =
         abi.encode(investors, _amountsInvested);
 
@@ -298,6 +301,8 @@ contract Bank is IBank, Ownable {
 
       require(keccak256(unassignedLand[unassignedLandId]) != keccak256(nullBytes),
         "This land was already assigned");
+
+      require(landIsInBank[unassignedLandId] == true, "The LAND is not owned by this contract");
 
       address[] memory investors;
       uint256[] memory money;
@@ -314,6 +319,8 @@ contract Bank is IBank, Ownable {
       unassignedLand[unassignedLandId] = nullBytes;
 
       if (investors.length == 1) {
+
+        landIsInBank[unassignedLandId] = false;
 
         bool status;
         bytes memory result;
@@ -457,11 +464,76 @@ contract Bank is IBank, Ownable {
 
         }
 
+        landIsInBank[bids[bidPosition].landId] = false;
+
         unassignedLand[bids[bidPosition].landId] = bids[bidPosition].bidData;
 
       }
 
+      beingBid[bids[bidPosition].landId] = false;
+
       emit RegisteredBidResult(result, bidPosition);
+
+    }
+
+    function generalSplitLand(
+      uint256 _tokenId,
+      uint256 landParts)
+      external {
+
+
+
+    }
+
+    function reconstructLand(
+      uint256 id,
+      address reconstructedLandReceiver)
+      external {
+
+
+
+    }
+
+    function cancelBidAfterNoAction(
+      uint256 bidPosition
+    ) external onlyOngoingBid(bidPosition) {
+
+      require(bids[bidPosition].creationTimestamp
+          + NO_ACTION_CANCEL_BID_AFTER * 1 seconds < now,
+          "Not enough time went by since the creation of the bid");
+
+      bids[bidPosition].bidStatus = uint8(BID_RESULT.CANCELLED);
+
+      address[] memory investors;
+      uint256[] memory money;
+
+      (investors, money) =
+        abi.decode(bids[bidPosition].bidData,
+                   (address[], uint256[]));
+
+      if (investors.length == 1) {
+
+        lockedForBidding[investors[0]][MANA] =
+          lockedForBidding[investors[0]][MANA].sub(money[0]);
+
+        wholeBalances[investors[0]][MANA] =
+          wholeBalances[investors[0]][MANA].add(money[0]);
+
+      } else {
+
+        for (uint i = 0; i < investors.length; i++) {
+
+          lockedForBidding[investors[i]][MANA] =
+            lockedForBidding[investors[i]][MANA].sub(money[i]);
+
+          splitBalances[investors[i]][MANA] =
+            splitBalances[investors[i]][MANA].add(money[i]);
+
+        }
+
+      }
+
+      beingBid[bids[bidPosition].landId] = false;
 
     }
 
