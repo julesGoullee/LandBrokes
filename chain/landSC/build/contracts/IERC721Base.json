@@ -365,9 +365,9 @@
   "sourceMap": "",
   "deployedSourceMap": "",
   "source": "pragma solidity ^0.4.18;\n\ninterface IERC721Base {\n  function totalSupply() external view returns (uint256);\n\n  // function exists(uint256 assetId) external view returns (bool);\n  function ownerOf(uint256 assetId) external view returns (address);\n\n  function balanceOf(address holder) external view returns (uint256);\n\n  function safeTransferFrom(address from, address to, uint256 assetId) external;\n  function safeTransferFrom(address from, address to, uint256 assetId, bytes userData) external;\n\n  function transferFrom(address from, address to, uint256 assetId) external;\n\n  function approve(address operator, uint256 assetId) external;\n  function setApprovalForAll(address operator, bool authorized) external;\n\n  function getApprovedAddress(uint256 assetId) external view returns (address);\n  function isApprovedForAll(address assetHolder, address operator) external view returns (bool);\n\n  function isAuthorized(address operator, uint256 assetId) external view returns (bool);\n\n  /**\n  * @dev Deprecated transfer event. Now we use the standard with three parameters\n  * It is only used in the ABI to get old transfer events. Do not remove\n  */\n  event Transfer(\n    address indexed from,\n    address indexed to,\n    uint256 indexed assetId,\n    address operator,\n    bytes userData,\n    bytes operatorData\n  );\n  /**\n   * @dev Deprecated transfer event. Now we use the standard with three parameters\n   * It is only used in the ABI to get old transfer events. Do not remove\n   */\n  event Transfer(\n    address indexed from,\n    address indexed to,\n    uint256 indexed assetId,\n    address operator,\n    bytes userData\n  );\n  event Transfer(\n    address indexed from,\n    address indexed to,\n    uint256 indexed assetId\n  );\n  event ApprovalForAll(\n    address indexed holder,\n    address indexed operator,\n    bool authorized\n  );\n  event Approval(\n    address indexed owner,\n    address indexed operator,\n    uint256 indexed assetId\n  );\n}\n",
-  "sourcePath": "/home/stefan/Work/RobInTheHood/chain/landSC/node_modules/erc821/contracts/IERC721Base.sol",
+  "sourcePath": "/Users/jules/WebstormProjects/RobInTheHood/chain/landSC/node_modules/erc821/contracts/IERC721Base.sol",
   "ast": {
-    "absolutePath": "/home/stefan/Work/RobInTheHood/chain/landSC/node_modules/erc821/contracts/IERC721Base.sol",
+    "absolutePath": "/Users/jules/WebstormProjects/RobInTheHood/chain/landSC/node_modules/erc821/contracts/IERC721Base.sol",
     "exportedSymbols": {
       "IERC721Base": [
         4348
@@ -2060,7 +2060,7 @@
     "src": "0:1945:23"
   },
   "legacyAST": {
-    "absolutePath": "/home/stefan/Work/RobInTheHood/chain/landSC/node_modules/erc821/contracts/IERC721Base.sol",
+    "absolutePath": "/Users/jules/WebstormProjects/RobInTheHood/chain/landSC/node_modules/erc821/contracts/IERC721Base.sol",
     "exportedSymbols": {
       "IERC721Base": [
         4348
@@ -3758,7 +3758,7 @@
   },
   "networks": {},
   "schemaVersion": "3.0.1",
-  "updatedAt": "2019-04-22T23:06:36.495Z",
+  "updatedAt": "2019-04-23T11:14:05.447Z",
   "devdoc": {
     "methods": {}
   },

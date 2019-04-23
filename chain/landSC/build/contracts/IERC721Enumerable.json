@@ -49,9 +49,9 @@
   "sourceMap": "",
   "deployedSourceMap": "",
   "source": "pragma solidity ^0.4.18;\n\ncontract IERC721Enumerable {\n\n  /**\n   * @notice Enumerate active tokens\n   * @dev Throws if `index` >= `totalSupply()`, otherwise SHALL NOT throw.\n   * @param index A counter less than `totalSupply()`\n   * @return The identifier for the `index`th asset, (sort order not\n   *  specified)\n   */\n  // TODO (eordano): Not implemented\n  // function tokenByIndex(uint256 index) public view returns (uint256 _assetId);\n\n  /**\n   * @notice Count of owners which own at least one asset\n   *  Must not throw.\n   * @return A count of the number of owners which own asset\n   */\n  // TODO (eordano): Not implemented\n  // function countOfOwners() public view returns (uint256 _count);\n\n  /**\n   * @notice Enumerate owners\n   * @dev Throws if `index` >= `countOfOwners()`, otherwise must not throw.\n   * @param index A counter less than `countOfOwners()`\n   * @return The address of the `index`th owner (sort order not specified)\n   */\n  // TODO (eordano): Not implemented\n  // function ownerByIndex(uint256 index) public view returns (address owner);\n\n  /**\n   * @notice Get all tokens of a given address\n   * @dev This is not intended to be used on-chain\n   * @param owner address of the owner to query\n   * @return a list of all assetIds of a user\n   */\n  function tokensOf(address owner) external view returns (uint256[]);\n\n  /**\n   * @notice Enumerate tokens assigned to an owner\n   * @dev Throws if `index` >= `balanceOf(owner)` or if\n   *  `owner` is the zero address, representing invalid assets.\n   *  Otherwise this must not throw.\n   * @param owner An address where we are interested in assets owned by them\n   * @param index A counter less than `balanceOf(owner)`\n   * @return The identifier for the `index`th asset assigned to `owner`,\n   *   (sort order not specified)\n   */\n  function tokenOfOwnerByIndex(\n    address owner, uint256 index\n  ) external view returns (uint256 tokenId);\n}\n",
-  "sourcePath": "/home/stefan/Work/RobInTheHood/chain/landSC/node_modules/erc821/contracts/IERC721Enumerable.sol",
+  "sourcePath": "/Users/jules/WebstormProjects/RobInTheHood/chain/landSC/node_modules/erc821/contracts/IERC721Enumerable.sol",
   "ast": {
-    "absolutePath": "/home/stefan/Work/RobInTheHood/chain/landSC/node_modules/erc821/contracts/IERC721Enumerable.sol",
+    "absolutePath": "/Users/jules/WebstormProjects/RobInTheHood/chain/landSC/node_modules/erc821/contracts/IERC721Enumerable.sol",
     "exportedSymbols": {
       "IERC721Enumerable": [
         4368
@@ -294,7 +294,7 @@
     "src": "0:1913:24"
   },
   "legacyAST": {
-    "absolutePath": "/home/stefan/Work/RobInTheHood/chain/landSC/node_modules/erc821/contracts/IERC721Enumerable.sol",
+    "absolutePath": "/Users/jules/WebstormProjects/RobInTheHood/chain/landSC/node_modules/erc821/contracts/IERC721Enumerable.sol",
     "exportedSymbols": {
       "IERC721Enumerable": [
         4368
@@ -542,7 +542,7 @@
   },
   "networks": {},
   "schemaVersion": "3.0.1",
-  "updatedAt": "2019-04-22T23:06:36.495Z",
+  "updatedAt": "2019-04-23T11:14:05.423Z",
   "devdoc": {
     "methods": {
       "tokenOfOwnerByIndex(address,uint256)": {

@@ -1,14 +1,14 @@
 {
   "contractName": "AssetRegistryStorage",
   "abi": [],
-  "bytecode": "0x6080604052348015600f57600080fd5b50603580601d6000396000f3006080604052600080fd00a165627a7a7230582082d187005bc4cdd70115995e6337bf2d37161202e90030bd6173bca9927dff490029",
-  "deployedBytecode": "0x6080604052600080fd00a165627a7a7230582082d187005bc4cdd70115995e6337bf2d37161202e90030bd6173bca9927dff490029",
+  "bytecode": "0x6080604052348015600f57600080fd5b50603580601d6000396000f3006080604052600080fd00a165627a7a72305820605a3c95e0d6971bbb84f949916ace6ec5dd5c19a1ad540eb51005b322424e400029",
+  "deployedBytecode": "0x6080604052600080fd00a165627a7a72305820605a3c95e0d6971bbb84f949916ace6ec5dd5c19a1ad540eb51005b322424e400029",
   "sourceMap": "26:1002:17:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;26:1002:17;;;;;;;",
   "deployedSourceMap": "26:1002:17:-;;;;;",
   "source": "pragma solidity ^0.4.18;\n\ncontract AssetRegistryStorage {\n\n  string internal _name;\n  string internal _symbol;\n  string internal _description;\n\n  /**\n   * Stores the total count of assets managed by this registry\n   */\n  uint256 internal _count;\n\n  /**\n   * Stores an array of assets owned by a given account\n   */\n  mapping(address => uint256[]) internal _assetsOf;\n\n  /**\n   * Stores the current holder of an asset\n   */\n  mapping(uint256 => address) internal _holderOf;\n\n  /**\n   * Stores the index of an asset in the `_assetsOf` array of its holder\n   */\n  mapping(uint256 => uint256) internal _indexOfAsset;\n\n  /**\n   * Stores the data associated with an asset\n   */\n  mapping(uint256 => string) internal _assetData;\n\n  /**\n   * For a given account, for a given operator, store whether that operator is\n   * allowed to transfer and modify assets on behalf of them.\n   */\n  mapping(address => mapping(address => bool)) internal _operators;\n\n  /**\n   * Approval array\n   */\n  mapping(uint256 => address) internal _approval;\n}\n",
-  "sourcePath": "/home/stefan/Work/RobInTheHood/chain/landSC/node_modules/erc821/contracts/AssetRegistryStorage.sol",
+  "sourcePath": "/Users/jules/WebstormProjects/RobInTheHood/chain/landSC/node_modules/erc821/contracts/AssetRegistryStorage.sol",
   "ast": {
-    "absolutePath": "/home/stefan/Work/RobInTheHood/chain/landSC/node_modules/erc821/contracts/AssetRegistryStorage.sol",
+    "absolutePath": "/Users/jules/WebstormProjects/RobInTheHood/chain/landSC/node_modules/erc821/contracts/AssetRegistryStorage.sol",
     "exportedSymbols": {
       "AssetRegistryStorage": [
         3180
@@ -452,7 +452,7 @@
     "src": "0:1029:17"
   },
   "legacyAST": {
-    "absolutePath": "/home/stefan/Work/RobInTheHood/chain/landSC/node_modules/erc821/contracts/AssetRegistryStorage.sol",
+    "absolutePath": "/Users/jules/WebstormProjects/RobInTheHood/chain/landSC/node_modules/erc821/contracts/AssetRegistryStorage.sol",
     "exportedSymbols": {
       "AssetRegistryStorage": [
         3180
@@ -901,7 +901,7 @@
   },
   "networks": {},
   "schemaVersion": "3.0.1",
-  "updatedAt": "2019-04-22T23:06:36.492Z",
+  "updatedAt": "2019-04-23T11:14:05.426Z",
   "devdoc": {
     "methods": {}
   },
