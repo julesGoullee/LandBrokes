@@ -44,4 +44,9 @@ module.exports = async function (deployer, network, accounts) {
 
   } else if (network === "ropsten") {}
 
+  console.log(`
+    LANDProxy: ${LANDProxy.address}
+    LANDRegistry: ${LANDRegistry.address}
+  `);
+
 };

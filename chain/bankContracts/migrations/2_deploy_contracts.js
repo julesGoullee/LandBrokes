@@ -1,20 +1,20 @@
-const MANAToken = artifacts.require("MANAToken");
-const Bank = artifacts.require("Bank");
-const { AbiCoder } = require('web3-eth-abi');
-const abiCoder = new AbiCoder();
+const MANAToken = artifacts.require('MANAToken');
+const Bank = artifacts.require('Bank');
+// const { AbiCoder } = require('web3-eth-abi');
+// const abiCoder = new AbiCoder();
 
 require('dotenv').config();
 
-const defaultMANAAmount = "10000000000000000000";
-const manaTicker = "MANA";
+const defaultMANAAmount = '10000000000000000000';
+const manaTicker = 'MANA';
 const maxLandOwners = 30;
-const max_land_splits = 10000;
+const maxLandSplits = 10000;
 const maxBidDuration = 60 * 60 * 24 * 180; //180 days
-const _noActionCancelAfter = 60 * 60 * 24 * 60; //60 days
+const noActionCancelAfter = 60 * 60 * 24 * 60; //60 days
 
-const addressDecentralandBid = "0x5581364f1350B82Ed4E25874f3727395BF6Ce490";
-const addressLandToken= "0x5581364f1350B82Ed4E25874f3727395BF6Ce490";
-const addressLandRegistry= "0x5581364f1350B82Ed4E25874f3727395BF6Ce490";
+const addressDecentralandBid = '0x5581364f1350B82Ed4E25874f3727395BF6Ce490';
+const addressLandToken= '0x5581364f1350B82Ed4E25874f3727395BF6Ce490';
+const addressLandRegistry= '0x254dffcd3277C0b1660F6d42EFbB754edaBAbC2B';
 
 module.exports = async function (deployer, network, accounts) {
 
@@ -37,9 +37,9 @@ module.exports = async function (deployer, network, accounts) {
     const params = [
       manaTicker,
       maxLandOwners,
-      max_land_splits,
+      maxLandSplits,
       maxBidDuration,
-      _noActionCancelAfter,
+      noActionCancelAfter,
       mana.address,
       addressDecentralandBid,
       addressLandToken,
@@ -48,6 +48,6 @@ module.exports = async function (deployer, network, accounts) {
 
     await deployer.deploy(Bank, ...params, { from: accounts[0] });
 
-  } else if (network === "ropsten") {}
+  } else if (network === 'ropsten') {}
 
 };
