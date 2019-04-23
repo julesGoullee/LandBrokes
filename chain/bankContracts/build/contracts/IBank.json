@@ -440,25 +440,6 @@
           "type": "uint256"
         }
       ],
-      "name": "getBidCreation",
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "constant": true,
-      "inputs": [
-        {
-          "name": "position",
-          "type": "uint256"
-        }
-      ],
       "name": "getBidStatus",
       "outputs": [
         {
@@ -653,16 +634,16 @@
   "deployedBytecode": "0x",
   "sourceMap": "",
   "deployedSourceMap": "",
-  "source": "pragma solidity 0.5.7;\n\nimport \"./.././mana/MANAToken.sol\";\n\ncontract IBank {\n\n  //Functions having onlyOwner are managed by our backend\n\n  event ProcessedBid(uint256 landId, uint256 totalBid, uint256 duration);\n  event BoughtLand(uint256 landId);\n  event DepositedMANA(uint8 depositType, address caller, address target, uint256 amount);\n  event WithdrewMANA(uint8 depositType, address caller, uint256 amount);\n  event RegisteredBidResult(uint8 result, uint256 bidPosition);\n  event SplitUnassignedLand(address _tokenAddress, uint256 _tokenId, uint256 parts);\n  event TransferredUnassignedLand(address to, uint256 tokenId);\n  event SplitExternalLand(address owner, address _tokenAddress,\n    uint256 _tokenId, uint256 parts);\n  event ReconstructedLand(uint256 id, address caller, address reconstructedLandReceiver);\n\n  struct Land {\n\n    address splitLandToken;\n\n    uint256 parts;\n\n  }\n\n  struct BidData {\n\n    bytes bidData;\n\n    uint256 landId;\n\n    uint256 creationTimestamp;\n\n    uint8 bidStatus;\n\n  }\n\n  //Hashed tickers used in splitBalances and wholeBalances\n  bytes32 public MANA;\n\n  //How many land owners can pool money together at once in order to bid\n  uint8 public MAX_LAND_OWNERS;\n\n  //Maximum number of pieces a patch of LAND can be split in\n  uint16 public MAX_LAND_SPLITS;\n\n  //When submitting a bid, we specify this duration (which is 1 day less than max amount permitted)\n  uint256 public BID_DURATION;\n\n  //The amount of time needs to pass since we locked some investor money for a bid but we did not update the bid status so it can be cancelled and investors get their money back\n  uint256 public NO_ACTION_CANCEL_BID_AFTER;\n\n  //How much MANA was deposited for buying whole plots of LAND without splitting\n  uint256 public wholeLandMANAFunds;\n\n  //How much MANA was deposited for buying whole plots of LAND and then split them\n  uint256 public splitLandMANAFunds;\n\n  //Address of MANA token\n  MANAToken manaToken;\n\n  //Land registru address\n  address landRegistry;\n\n  //The address of the LAND ERC721\n  address landAddress;\n\n  /**\n  *  When submitting a bid we lock up the funds of the investors we take money from.\n  *  In order for them to get their money back in case we don't update the bid status\n  *  for a specific bid, we abi.encode the investors and _amountsInvested\n  *  and store the resulting bytes in a Bid struct alongside the current timestamp\n  *  and the ONGOING status\n  **/\n  BidData[] bids;\n\n  //Some people want to let us invest for them but only want a fraction of LAND\n  mapping(address => mapping(bytes32 => uint256)) splitBalances;\n\n  //Others want to let us invest for them and target whole plots of LAND\n  mapping(address => mapping(bytes32 => uint256)) wholeBalances;\n\n  //Funds already used in a bid\n  mapping(address => mapping(bytes32 => uint256)) lockedForBidding;\n\n  //LAND id being bid on by us\n  mapping(uint256 => bool) beingBid;\n\n  //Details for LAND token deposited in this contract and split; mapping LAND token id to Land struct\n  mapping(uint256 => Land) landDetails;\n\n  //Telling if a LAND is in the Bank\n  mapping(uint256 => bool) landIsInBank;\n\n  mapping(uint256 => bytes) unassignedLand;\n\n  enum BID_RESULT {ONGOING, SUCCESSFUL, FAILED, CANCELLED}\n\n  enum BALANCE_TYPE {SPLIT, WHOLE}\n\n  enum INVESTMENT_TYPE {WHOLE, SPLIT}\n\n  function getDepositedLandSplitAddress(\n    uint256 landID\n  ) public view returns (address);\n\n  function getDepositedLandParts(\n    uint256 landID\n  ) public view returns (uint256);\n\n  function getSplitBalance(\n    address who,\n    bytes32 hashedCoinTicker\n  ) public view returns (uint256);\n\n  function getWholeBalance(\n    address who,\n    bytes32 hashedCoinTicker\n  ) public view returns (uint256);\n\n  function getLockedFunds(\n    address who,\n    bytes32 coinTicker\n  ) public view returns (uint256);\n\n  function landIsBeingBid(\n    uint256 landId\n  ) public view returns (bool);\n\n  function getBidInvestorData(\n    uint256 position\n  ) public view returns (bytes memory);\n\n  function getBidCreation(\n    uint256 position\n  ) public view returns (uint256);\n\n  function getBidStatus(\n    uint256 position\n  ) public view returns (uint8);\n\n  //needs onlyOwner\n\n  /**\n  * @dev Bid for land using the Decentraland Bid contract.\n         Our backend monitors this smart contract and\n         uses the balances that investors entrusted us with to bid for\n         the best LAND we can find for sale. We are effectively an investment\n         fund for millenials and Gen Zs. They simply send money to this\n         contract and we take care to invest it\n\n  *  In the investors array we cannot mix those who want only a fraction\n     of LAND and those who want a whole plot\n\n  * @param investmentType - SPLIT or WHOLE (we will divide the LAND or we give the entire LAND to one entity)\n  * @param landId - The id of the LAND we want to invest in\n  * @param investors - The addresses whose funds we will use to bid\n  * @param _amountsInvested - The amount we use from each investor's balance\n  */\n  function bidForLand(\n    uint8 investmentType,\n    uint256 landId,\n    address[] calldata investors,\n    uint256[] calldata _amountsInvested)\n    external;\n\n  /**\n  * Buy land directly without going through the bid process.\n  * Params are similar to bidForLand apart from marketplace which is the contract\n  * where we can buy LAND directly\n  **/\n  function directBuyLand(\n    address marketplace,\n    uint8 investmentType,\n    uint256 landId,\n    address[] calldata investors,\n    uint256[] calldata _amountsInvested\n  ) external;\n\n  //Needs onlyOwner\n\n  /**\n  * This function is used to assign land after buying it\n\n  * @param unassignedLandId - The id of the LAND which is not assigned\n  **/\n\n  function assignLand(uint256 unassignedLandId) external;\n\n  /**\n  * @dev Entrust the contract with MANA so it can be invested for you or for someone you deposit for\n  * @param balanceType - 0 or 1 (SPLIT OR WHOLE)\n  * @param _target - Who receives the MANA in their balance\n  * @param _amount - How much MANA is deposited\n  **/\n  function depositMANA(uint8 balanceType, address _target, uint256 _amount) external;\n\n  /**\n  * @dev Withdraw MANA from the contract\n  * @param balanceType - 0 or 1 (SPLIT OR WHOLE)\n  * @param _amount - How much MANA is being withdrawn\n  **/\n  function withdrawMANA(uint8 balanceType, uint256 _amount) external;\n\n  /**\n  * @dev Register the result of a bid.\n         If unsuccessful, transfer funds from locked to either split or\n         whole balances. If we want to cancel, call the cancelLandBid\n         function and send funds from locked to normal balances.\n         If successful and the investors we took money from wanted SPLIT,\n         we decrease the amounts from lockedForBidding and we create a\n         new SplitLand ERC20 contract where we distribute LAND parts to\n         investors. If the investment type is WHOLE, we just send the entire\n         LAND to the investor. When distributing LAND parts, each investor\n         will get a proportional amount of LAND parts according to how much\n         money we used from their balance, compared to total amount invested\n         in that LAND.\n\n  * @param result - It can be 0, 1 or 2 (SUCCESSFUL, FAILED, CANCELLED)\n  * @param bidPosition - The position of the bid in the bids array\n  **/\n\n  //needs onlyOwner\n\n  function registerBidResult(\n    uint8 result,\n    uint256 bidPosition)\n    external;\n\n  /**\n  * @dev Allow anyone to deposit a LAND token in this contract and create\n         a SplitLand ERC20 contract where all the LAND parts are assigned\n         in the constructor to msg.sender. The LAND token deposited in this contract\n         cannot be transferred elsewhere unless someone has all the LAND parts\n         in the balance in the SplitLand contract and calls reconstructLand.\n\n         When creating a new SplitContract, create a new Land struct with\n         the address of the new contract and how many portions of LAND\n         were created.\n\n  * @param _tokenId - The id of the LAND we want to invest in\n  * @param landParts - Needs to be less than or equal to MAX_LAND_SPLITS\n                       Tells the newly created SplitLand contract in how\n                       many smaller parts we divided the LAND\n  **/\n  function generalSplitLand(\n    uint256 _tokenId,\n    uint256 landParts)\n    external;\n\n  /**\n  * @dev Reconstruct and entire LAND token from the LAND parts in a SplitLand\n         contract and then send the LAND to reconstructedLandReceiver.\n         The msg.sender needs to have all the LAND parts in their balance inside\n         the SplitLand contract.\n\n  * @param id - The id of the LAND token the caller wants to reconstruct\n  * @param reconstructedLandReceiver - The receiver of the reconstructed LAND token\n  **/\n  function reconstructLand(\n    uint256 id,\n    address reconstructedLandReceiver)\n    external;\n\n  /**\n  * @dev Cancel a bid if it hasn't been updated for the time specified in NO_ACTION_CANCEL_BID_AFTER\n  *      This function should decode the bytes value, get the investors and amounts arrays,\n         and send the money out of this contract and back to the investors. Remember to decrease the\n         lockedForBidding value for each investor! Also update the bid status to CANCELLED\n\n  * @param bidPosition - The position of the bid in the bids array\n  **/\n  function cancelBidAfterNoAction(\n    uint256 bidPosition\n  ) external;\n\n}\n",
-  "sourcePath": "/home/stefan/Work/RobInTheHood/chain/bankContracts/contracts/interfaces/IBank.sol",
+  "source": "pragma solidity 0.5.7;\n\nimport \"./.././mana/MANAToken.sol\";\n\ncontract IBank {\n\n  //Functions having onlyOwner are managed by our backend\n\n  event ProcessedBid(uint256 landId, uint256 totalBid, uint256 duration);\n  event BoughtLand(uint256 landId);\n  event DepositedMANA(uint8 depositType, address caller, address target, uint256 amount);\n  event WithdrewMANA(uint8 depositType, address caller, uint256 amount);\n  event RegisteredBidResult(uint8 result, uint256 bidPosition);\n  event SplitUnassignedLand(address _tokenAddress, uint256 _tokenId, uint256 parts);\n  event TransferredUnassignedLand(address to, uint256 tokenId);\n  event SplitExternalLand(address owner, address _tokenAddress,\n    uint256 _tokenId, uint256 parts);\n  event ReconstructedLand(uint256 id, address caller, address reconstructedLandReceiver);\n\n  struct Land {\n\n    address splitLandToken;\n\n    uint256 parts;\n\n  }\n\n  struct BidData {\n\n    bytes bidData;\n\n    uint256 landId;\n\n    uint256 creationTimestamp;\n\n    uint8 bidStatus;\n\n  }\n\n  //Hashed tickers used in splitBalances and wholeBalances\n  bytes32 public MANA;\n\n  //How many land owners can pool money together at once in order to bid\n  uint8 public MAX_LAND_OWNERS;\n\n  //Maximum number of pieces a patch of LAND can be split in\n  uint16 public MAX_LAND_SPLITS;\n\n  //When submitting a bid, we specify this duration (which is 1 day less than max amount permitted)\n  uint256 public BID_DURATION;\n\n  //The amount of time needs to pass since we locked some investor money for a bid but we did not update the bid status so it can be cancelled and investors get their money back\n  uint256 public NO_ACTION_CANCEL_BID_AFTER;\n\n  //How much MANA was deposited for buying whole plots of LAND without splitting\n  uint256 public wholeLandMANAFunds;\n\n  //How much MANA was deposited for buying whole plots of LAND and then split them\n  uint256 public splitLandMANAFunds;\n\n  //Address of MANA token\n  MANAToken manaToken;\n\n  //Land registry address\n  address landRegistry;\n\n  //The address of the LAND ERC721\n  address landAddress;\n\n  /**\n  *  When submitting a bid we lock up the funds of the investors we take money from.\n  *  In order for them to get their money back in case we don't update the bid status\n  *  for a specific bid, we abi.encode the investors and _amountsInvested\n  *  and store the resulting bytes in a Bid struct alongside the current timestamp\n  *  and the ONGOING status\n  **/\n  BidData[] bids;\n\n  //Some people want to let us invest for them but only want a fraction of LAND\n  mapping(address => mapping(bytes32 => uint256)) splitBalances;\n\n  //Others want to let us invest for them and target whole plots of LAND\n  mapping(address => mapping(bytes32 => uint256)) wholeBalances;\n\n  //Funds already used in a bid\n  mapping(address => mapping(bytes32 => uint256)) lockedForBidding;\n\n  //LAND id being bid on by us\n  mapping(uint256 => bool) beingBid;\n\n  //Details for LAND token deposited in this contract and split; mapping LAND token id to Land struct\n  mapping(uint256 => Land) landDetails;\n\n  //Telling if a LAND is in the Bank\n  mapping(uint256 => bool) landIsInBank;\n\n  mapping(uint256 => bytes) unassignedLand;\n\n  enum BID_RESULT {ONGOING, SUCCESSFUL, FAILED, CANCELLED}\n\n  enum BALANCE_TYPE {SPLIT, WHOLE}\n\n  enum INVESTMENT_TYPE {WHOLE, SPLIT}\n\n  function getDepositedLandSplitAddress(\n    uint256 landID\n  ) public view returns (address);\n\n  function getDepositedLandParts(\n    uint256 landID\n  ) public view returns (uint256);\n\n  function getSplitBalance(\n    address who,\n    bytes32 hashedCoinTicker\n  ) public view returns (uint256);\n\n  function getWholeBalance(\n    address who,\n    bytes32 hashedCoinTicker\n  ) public view returns (uint256);\n\n  function getLockedFunds(\n    address who,\n    bytes32 coinTicker\n  ) public view returns (uint256);\n\n  function landIsBeingBid(\n    uint256 landId\n  ) public view returns (bool);\n\n  function getBidInvestorData(\n    uint256 position\n  ) public view returns (bytes memory);\n\n//  function getBidCreation(\n//    uint256 position\n//  ) public view returns (uint256);\n\n  function getBidStatus(\n    uint256 position\n  ) public view returns (uint8);\n\n  //needs onlyOwner\n\n  /**\n  * @dev Bid for land using the Decentraland Bid contract.\n         Our backend monitors this smart contract and\n         uses the balances that investors entrusted us with to bid for\n         the best LAND we can find for sale. We are effectively an investment\n         fund for millenials and Gen Zs. They simply send money to this\n         contract and we take care to invest it\n\n  *  In the investors array we cannot mix those who want only a fraction\n     of LAND and those who want a whole plot\n\n  * @param investmentType - SPLIT or WHOLE (we will divide the LAND or we give the entire LAND to one entity)\n  * @param landId - The id of the LAND we want to invest in\n  * @param investors - The addresses whose funds we will use to bid\n  * @param _amountsInvested - The amount we use from each investor's balance\n  */\n  function bidForLand(\n    uint8 investmentType,\n    uint256 landId,\n    address[] calldata investors,\n    uint256[] calldata _amountsInvested)\n  external;\n\n  /**\n  * Buy land directly without going through the bid process.\n  * Params are similar to bidForLand apart from marketplace which is the contract\n  * where we can buy LAND directly\n  **/\n  function directBuyLand(\n    address marketplace,\n    uint8 investmentType,\n    uint256 landId,\n    address[] calldata investors,\n    uint256[] calldata _amountsInvested\n  ) external;\n\n  //Needs onlyOwner\n\n  /**\n  * This function is used to assign land after buying it\n\n  * @param unassignedLandId - The id of the LAND which is not assigned\n  **/\n\n  function assignLand(uint256 unassignedLandId) external;\n\n  /**\n  * @dev Entrust the contract with MANA so it can be invested for you or for someone you deposit for\n  * @param balanceType - 0 or 1 (SPLIT OR WHOLE)\n  * @param _target - Who receives the MANA in their balance\n  * @param _amount - How much MANA is deposited\n  **/\n  function depositMANA(uint8 balanceType, address _target, uint256 _amount) external;\n\n  /**\n  * @dev Withdraw MANA from the contract\n  * @param balanceType - 0 or 1 (SPLIT OR WHOLE)\n  * @param _amount - How much MANA is being withdrawn\n  **/\n  function withdrawMANA(uint8 balanceType, uint256 _amount) external;\n\n  /**\n  * @dev Register the result of a bid.\n         If unsuccessful, transfer funds from locked to either split or\n         whole balances. If we want to cancel, call the cancelLandBid\n         function and send funds from locked to normal balances.\n         If successful and the investors we took money from wanted SPLIT,\n         we decrease the amounts from lockedForBidding and we create a\n         new SplitLand ERC20 contract where we distribute LAND parts to\n         investors. If the investment type is WHOLE, we just send the entire\n         LAND to the investor. When distributing LAND parts, each investor\n         will get a proportional amount of LAND parts according to how much\n         money we used from their balance, compared to total amount invested\n         in that LAND.\n\n  * @param result - It can be 0, 1 or 2 (SUCCESSFUL, FAILED, CANCELLED)\n  * @param bidPosition - The position of the bid in the bids array\n  **/\n\n  //needs onlyOwner\n\n  function registerBidResult(\n    uint8 result,\n    uint256 bidPosition)\n  external;\n\n  /**\n  * @dev Allow anyone to deposit a LAND token in this contract and create\n         a SplitLand ERC20 contract where all the LAND parts are assigned\n         in the constructor to msg.sender. The LAND token deposited in this contract\n         cannot be transferred elsewhere unless someone has all the LAND parts\n         in the balance in the SplitLand contract and calls reconstructLand.\n\n         When creating a new SplitContract, create a new Land struct with\n         the address of the new contract and how many portions of LAND\n         were created.\n\n  * @param _tokenId - The id of the LAND we want to invest in\n  * @param landParts - Needs to be less than or equal to MAX_LAND_SPLITS\n                       Tells the newly created SplitLand contract in how\n                       many smaller parts we divided the LAND\n  **/\n  function generalSplitLand(\n    uint256 _tokenId,\n    uint256 landParts)\n  external;\n\n  /**\n  * @dev Reconstruct and entire LAND token from the LAND parts in a SplitLand\n         contract and then send the LAND to reconstructedLandReceiver.\n         The msg.sender needs to have all the LAND parts in their balance inside\n         the SplitLand contract.\n\n  * @param id - The id of the LAND token the caller wants to reconstruct\n  * @param reconstructedLandReceiver - The receiver of the reconstructed LAND token\n  **/\n  function reconstructLand(\n    uint256 id,\n    address reconstructedLandReceiver)\n  external;\n\n  /**\n  * @dev Cancel a bid if it hasn't been updated for the time specified in NO_ACTION_CANCEL_BID_AFTER\n  *      This function should decode the bytes value, get the investors and amounts arrays,\n         and send the money out of this contract and back to the investors. Remember to decrease the\n         lockedForBidding value for each investor! Also update the bid status to CANCELLED\n\n  * @param bidPosition - The position of the bid in the bids array\n  **/\n  function cancelBidAfterNoAction(\n    uint256 bidPosition\n  ) external;\n\n}\n",
+  "sourcePath": "/Users/jules/WebstormProjects/RobInTheHood/chain/bankContracts/contracts/interfaces/IBank.sol",
   "ast": {
-    "absolutePath": "/home/stefan/Work/RobInTheHood/chain/bankContracts/contracts/interfaces/IBank.sol",
+    "absolutePath": "/Users/jules/WebstormProjects/RobInTheHood/chain/bankContracts/contracts/interfaces/IBank.sol",
     "exportedSymbols": {
       "IBank": [
-        354
+        347
       ]
     },
-    "id": 355,
+    "id": 348,
     "nodeType": "SourceUnit",
     "nodes": [
       {
@@ -676,12 +657,12 @@
         "src": "0:22:1"
       },
       {
-        "absolutePath": "/home/stefan/Work/RobInTheHood/chain/bankContracts/contracts/mana/MANAToken.sol",
+        "absolutePath": "/Users/jules/WebstormProjects/RobInTheHood/chain/bankContracts/contracts/mana/MANAToken.sol",
         "file": "./.././mana/MANAToken.sol",
         "id": 59,
         "nodeType": "ImportDirective",
-        "scope": 355,
-        "sourceUnit": 2833,
+        "scope": 348,
+        "sourceUnit": 2762,
         "src": "24:35:1",
         "symbolAliases": [],
         "unitAlias": ""
@@ -692,9 +673,9 @@
         "contractKind": "contract",
         "documentation": null,
         "fullyImplemented": false,
-        "id": 354,
+        "id": 347,
         "linearizedBaseContracts": [
-          354
+          347
         ],
         "name": "IBank",
         "nodeType": "ContractDefinition",
@@ -1578,7 +1559,7 @@
             ],
             "name": "Land",
             "nodeType": "StructDefinition",
-            "scope": 354,
+            "scope": 347,
             "src": "819:67:1",
             "visibility": "public"
           },
@@ -1693,7 +1674,7 @@
             ],
             "name": "BidData",
             "nodeType": "StructDefinition",
-            "scope": 354,
+            "scope": 347,
             "src": "890:116:1",
             "visibility": "public"
           },
@@ -1702,7 +1683,7 @@
             "id": 143,
             "name": "MANA",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "1069:19:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -1728,7 +1709,7 @@
             "id": 145,
             "name": "MAX_LAND_OWNERS",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "1166:28:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -1754,7 +1735,7 @@
             "id": 147,
             "name": "MAX_LAND_SPLITS",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "1260:29:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -1780,7 +1761,7 @@
             "id": 149,
             "name": "BID_DURATION",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "1394:27:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -1806,7 +1787,7 @@
             "id": 151,
             "name": "NO_ACTION_CANCEL_BID_AFTER",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "1604:41:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -1832,7 +1813,7 @@
             "id": 153,
             "name": "wholeLandMANAFunds",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "1731:33:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -1858,7 +1839,7 @@
             "id": 155,
             "name": "splitLandMANAFunds",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "1852:33:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -1884,12 +1865,12 @@
             "id": 157,
             "name": "manaToken",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "1916:19:1",
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
-              "typeIdentifier": "t_contract$_MANAToken_$2832",
+              "typeIdentifier": "t_contract$_MANAToken_$2761",
               "typeString": "contract MANAToken"
             },
             "typeName": {
@@ -1897,10 +1878,10 @@
               "id": 156,
               "name": "MANAToken",
               "nodeType": "UserDefinedTypeName",
-              "referencedDeclaration": 2832,
+              "referencedDeclaration": 2761,
               "src": "1916:9:1",
               "typeDescriptions": {
-                "typeIdentifier": "t_contract$_MANAToken_$2832",
+                "typeIdentifier": "t_contract$_MANAToken_$2761",
                 "typeString": "contract MANAToken"
               }
             },
@@ -1912,7 +1893,7 @@
             "id": 159,
             "name": "landRegistry",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "1966:20:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -1939,7 +1920,7 @@
             "id": 161,
             "name": "landAddress",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "2026:19:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -1966,7 +1947,7 @@
             "id": 164,
             "name": "bids",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "2418:14:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -2004,7 +1985,7 @@
             "id": 170,
             "name": "splitBalances",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "2517:61:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -2068,7 +2049,7 @@
             "id": 176,
             "name": "wholeBalances",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "2656:61:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -2132,7 +2113,7 @@
             "id": 182,
             "name": "lockedForBidding",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "2754:64:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -2196,7 +2177,7 @@
             "id": 186,
             "name": "beingBid",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "2854:33:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -2241,7 +2222,7 @@
             "id": 190,
             "name": "landDetails",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "2994:36:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -2288,7 +2269,7 @@
             "id": 194,
             "name": "landIsInBank",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "3072:37:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -2333,7 +2314,7 @@
             "id": 198,
             "name": "unassignedLand",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "3114:40:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -2524,7 +2505,7 @@
               ],
               "src": "3376:9:1"
             },
-            "scope": 354,
+            "scope": 347,
             "src": "3294:92:1",
             "stateMutability": "view",
             "superFunction": null,
@@ -2605,7 +2586,7 @@
               ],
               "src": "3465:9:1"
             },
-            "scope": 354,
+            "scope": 347,
             "src": "3390:85:1",
             "stateMutability": "view",
             "superFunction": null,
@@ -2713,7 +2694,7 @@
               ],
               "src": "3575:9:1"
             },
-            "scope": 354,
+            "scope": 347,
             "src": "3479:106:1",
             "stateMutability": "view",
             "superFunction": null,
@@ -2821,7 +2802,7 @@
               ],
               "src": "3685:9:1"
             },
-            "scope": 354,
+            "scope": 347,
             "src": "3589:106:1",
             "stateMutability": "view",
             "superFunction": null,
@@ -2929,7 +2910,7 @@
               ],
               "src": "3788:9:1"
             },
-            "scope": 354,
+            "scope": 347,
             "src": "3699:99:1",
             "stateMutability": "view",
             "superFunction": null,
@@ -3010,7 +2991,7 @@
               ],
               "src": "3870:6:1"
             },
-            "scope": 354,
+            "scope": 347,
             "src": "3802:75:1",
             "stateMutability": "view",
             "superFunction": null,
@@ -3091,7 +3072,7 @@
               ],
               "src": "3955:14:1"
             },
-            "scope": 354,
+            "scope": 347,
             "src": "3881:89:1",
             "stateMutability": "view",
             "superFunction": null,
@@ -3104,7 +3085,7 @@
             "implemented": false,
             "kind": "function",
             "modifiers": [],
-            "name": "getBidCreation",
+            "name": "getBidStatus",
             "nodeType": "FunctionDefinition",
             "parameters": {
               "id": 267,
@@ -3116,7 +3097,7 @@
                   "name": "position",
                   "nodeType": "VariableDeclaration",
                   "scope": 271,
-                  "src": "4003:16:1",
+                  "src": "4091:16:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -3127,7 +3108,7 @@
                     "id": 265,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "4003:7:1",
+                    "src": "4091:7:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -3137,7 +3118,7 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "3997:26:1"
+              "src": "4085:26:1"
             },
             "returnParameters": {
               "id": 270,
@@ -3149,88 +3130,7 @@
                   "name": "",
                   "nodeType": "VariableDeclaration",
                   "scope": 271,
-                  "src": "4045:7:1",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_uint256",
-                    "typeString": "uint256"
-                  },
-                  "typeName": {
-                    "id": 268,
-                    "name": "uint256",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "4045:7:1",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_uint256",
-                      "typeString": "uint256"
-                    }
-                  },
-                  "value": null,
-                  "visibility": "internal"
-                }
-              ],
-              "src": "4044:9:1"
-            },
-            "scope": 354,
-            "src": "3974:80:1",
-            "stateMutability": "view",
-            "superFunction": null,
-            "visibility": "public"
-          },
-          {
-            "body": null,
-            "documentation": null,
-            "id": 278,
-            "implemented": false,
-            "kind": "function",
-            "modifiers": [],
-            "name": "getBidStatus",
-            "nodeType": "FunctionDefinition",
-            "parameters": {
-              "id": 274,
-              "nodeType": "ParameterList",
-              "parameters": [
-                {
-                  "constant": false,
-                  "id": 273,
-                  "name": "position",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 278,
-                  "src": "4085:16:1",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_uint256",
-                    "typeString": "uint256"
-                  },
-                  "typeName": {
-                    "id": 272,
-                    "name": "uint256",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "4085:7:1",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_uint256",
-                      "typeString": "uint256"
-                    }
-                  },
-                  "value": null,
-                  "visibility": "internal"
-                }
-              ],
-              "src": "4079:26:1"
-            },
-            "returnParameters": {
-              "id": 277,
-              "nodeType": "ParameterList",
-              "parameters": [
-                {
-                  "constant": false,
-                  "id": 276,
-                  "name": "",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 278,
-                  "src": "4127:5:1",
+                  "src": "4133:5:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -3238,10 +3138,10 @@
                     "typeString": "uint8"
                   },
                   "typeName": {
-                    "id": 275,
+                    "id": 268,
                     "name": "uint8",
                     "nodeType": "ElementaryTypeName",
-                    "src": "4127:5:1",
+                    "src": "4133:5:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint8",
                       "typeString": "uint8"
@@ -3251,10 +3151,10 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "4126:7:1"
+              "src": "4132:7:1"
             },
-            "scope": 354,
-            "src": "4058:76:1",
+            "scope": 347,
+            "src": "4064:76:1",
             "stateMutability": "view",
             "superFunction": null,
             "visibility": "public"
@@ -3262,23 +3162,23 @@
           {
             "body": null,
             "documentation": "@dev Bid for land using the Decentraland Bid contract.\nOur backend monitors this smart contract and\nuses the balances that investors entrusted us with to bid for\nthe best LAND we can find for sale. We are effectively an investment\nfund for millenials and Gen Zs. They simply send money to this\ncontract and we take care to invest it\n In the investors array we cannot mix those who want only a fraction\nof LAND and those who want a whole plot\n@param investmentType - SPLIT or WHOLE (we will divide the LAND or we give the entire LAND to one entity)\n@param landId - The id of the LAND we want to invest in\n@param investors - The addresses whose funds we will use to bid\n@param _amountsInvested - The amount we use from each investor's balance",
-            "id": 291,
+            "id": 284,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
             "name": "bidForLand",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 289,
+              "id": 282,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 280,
+                  "id": 273,
                   "name": "investmentType",
                   "nodeType": "VariableDeclaration",
-                  "scope": 291,
-                  "src": "5012:20:1",
+                  "scope": 284,
+                  "src": "5018:20:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -3286,10 +3186,10 @@
                     "typeString": "uint8"
                   },
                   "typeName": {
-                    "id": 279,
+                    "id": 272,
                     "name": "uint8",
                     "nodeType": "ElementaryTypeName",
-                    "src": "5012:5:1",
+                    "src": "5018:5:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint8",
                       "typeString": "uint8"
@@ -3300,11 +3200,11 @@
                 },
                 {
                   "constant": false,
-                  "id": 282,
+                  "id": 275,
                   "name": "landId",
                   "nodeType": "VariableDeclaration",
-                  "scope": 291,
-                  "src": "5038:14:1",
+                  "scope": 284,
+                  "src": "5044:14:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -3312,10 +3212,10 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 281,
+                    "id": 274,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "5038:7:1",
+                    "src": "5044:7:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -3326,11 +3226,11 @@
                 },
                 {
                   "constant": false,
-                  "id": 285,
+                  "id": 278,
                   "name": "investors",
                   "nodeType": "VariableDeclaration",
-                  "scope": 291,
-                  "src": "5058:28:1",
+                  "scope": 284,
+                  "src": "5064:28:1",
                   "stateVariable": false,
                   "storageLocation": "calldata",
                   "typeDescriptions": {
@@ -3339,23 +3239,114 @@
                   },
                   "typeName": {
                     "baseType": {
-                      "id": 283,
+                      "id": 276,
                       "name": "address",
                       "nodeType": "ElementaryTypeName",
-                      "src": "5058:7:1",
+                      "src": "5064:7:1",
                       "stateMutability": "nonpayable",
                       "typeDescriptions": {
                         "typeIdentifier": "t_address",
                         "typeString": "address"
                       }
                     },
-                    "id": 284,
+                    "id": 277,
                     "length": null,
                     "nodeType": "ArrayTypeName",
-                    "src": "5058:9:1",
+                    "src": "5064:9:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
                       "typeString": "address[]"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 281,
+                  "name": "_amountsInvested",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 284,
+                  "src": "5098:35:1",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_uint256_$dyn_calldata_ptr",
+                    "typeString": "uint256[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 279,
+                      "name": "uint256",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "5098:7:1",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "id": 280,
+                    "length": null,
+                    "nodeType": "ArrayTypeName",
+                    "src": "5098:9:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_uint256_$dyn_storage_ptr",
+                      "typeString": "uint256[]"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "5012:122:1"
+            },
+            "returnParameters": {
+              "id": 283,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "5145:0:1"
+            },
+            "scope": 347,
+            "src": "4993:153:1",
+            "stateMutability": "nonpayable",
+            "superFunction": null,
+            "visibility": "external"
+          },
+          {
+            "body": null,
+            "documentation": "Buy land directly without going through the bid process.\nParams are similar to bidForLand apart from marketplace which is the contract\nwhere we can buy LAND directly*",
+            "id": 299,
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "directBuyLand",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 297,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 286,
+                  "name": "marketplace",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 299,
+                  "src": "5368:19:1",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 285,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "5368:7:1",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
                     }
                   },
                   "value": null,
@@ -3364,101 +3355,10 @@
                 {
                   "constant": false,
                   "id": 288,
-                  "name": "_amountsInvested",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 291,
-                  "src": "5092:35:1",
-                  "stateVariable": false,
-                  "storageLocation": "calldata",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_array$_t_uint256_$dyn_calldata_ptr",
-                    "typeString": "uint256[]"
-                  },
-                  "typeName": {
-                    "baseType": {
-                      "id": 286,
-                      "name": "uint256",
-                      "nodeType": "ElementaryTypeName",
-                      "src": "5092:7:1",
-                      "typeDescriptions": {
-                        "typeIdentifier": "t_uint256",
-                        "typeString": "uint256"
-                      }
-                    },
-                    "id": 287,
-                    "length": null,
-                    "nodeType": "ArrayTypeName",
-                    "src": "5092:9:1",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_array$_t_uint256_$dyn_storage_ptr",
-                      "typeString": "uint256[]"
-                    }
-                  },
-                  "value": null,
-                  "visibility": "internal"
-                }
-              ],
-              "src": "5006:122:1"
-            },
-            "returnParameters": {
-              "id": 290,
-              "nodeType": "ParameterList",
-              "parameters": [],
-              "src": "5141:0:1"
-            },
-            "scope": 354,
-            "src": "4987:155:1",
-            "stateMutability": "nonpayable",
-            "superFunction": null,
-            "visibility": "external"
-          },
-          {
-            "body": null,
-            "documentation": "Buy land directly without going through the bid process.\nParams are similar to bidForLand apart from marketplace which is the contract\nwhere we can buy LAND directly*",
-            "id": 306,
-            "implemented": false,
-            "kind": "function",
-            "modifiers": [],
-            "name": "directBuyLand",
-            "nodeType": "FunctionDefinition",
-            "parameters": {
-              "id": 304,
-              "nodeType": "ParameterList",
-              "parameters": [
-                {
-                  "constant": false,
-                  "id": 293,
-                  "name": "marketplace",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 306,
-                  "src": "5364:19:1",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_address",
-                    "typeString": "address"
-                  },
-                  "typeName": {
-                    "id": 292,
-                    "name": "address",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "5364:7:1",
-                    "stateMutability": "nonpayable",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_address",
-                      "typeString": "address"
-                    }
-                  },
-                  "value": null,
-                  "visibility": "internal"
-                },
-                {
-                  "constant": false,
-                  "id": 295,
                   "name": "investmentType",
                   "nodeType": "VariableDeclaration",
-                  "scope": 306,
-                  "src": "5389:20:1",
+                  "scope": 299,
+                  "src": "5393:20:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -3466,10 +3366,10 @@
                     "typeString": "uint8"
                   },
                   "typeName": {
-                    "id": 294,
+                    "id": 287,
                     "name": "uint8",
                     "nodeType": "ElementaryTypeName",
-                    "src": "5389:5:1",
+                    "src": "5393:5:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint8",
                       "typeString": "uint8"
@@ -3480,11 +3380,11 @@
                 },
                 {
                   "constant": false,
-                  "id": 297,
+                  "id": 290,
                   "name": "landId",
                   "nodeType": "VariableDeclaration",
-                  "scope": 306,
-                  "src": "5415:14:1",
+                  "scope": 299,
+                  "src": "5419:14:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -3492,10 +3392,10 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 296,
+                    "id": 289,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "5415:7:1",
+                    "src": "5419:7:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -3506,11 +3406,11 @@
                 },
                 {
                   "constant": false,
-                  "id": 300,
+                  "id": 293,
                   "name": "investors",
                   "nodeType": "VariableDeclaration",
-                  "scope": 306,
-                  "src": "5435:28:1",
+                  "scope": 299,
+                  "src": "5439:28:1",
                   "stateVariable": false,
                   "storageLocation": "calldata",
                   "typeDescriptions": {
@@ -3519,20 +3419,20 @@
                   },
                   "typeName": {
                     "baseType": {
-                      "id": 298,
+                      "id": 291,
                       "name": "address",
                       "nodeType": "ElementaryTypeName",
-                      "src": "5435:7:1",
+                      "src": "5439:7:1",
                       "stateMutability": "nonpayable",
                       "typeDescriptions": {
                         "typeIdentifier": "t_address",
                         "typeString": "address"
                       }
                     },
-                    "id": 299,
+                    "id": 292,
                     "length": null,
                     "nodeType": "ArrayTypeName",
-                    "src": "5435:9:1",
+                    "src": "5439:9:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
                       "typeString": "address[]"
@@ -3543,11 +3443,11 @@
                 },
                 {
                   "constant": false,
-                  "id": 303,
+                  "id": 296,
                   "name": "_amountsInvested",
                   "nodeType": "VariableDeclaration",
-                  "scope": 306,
-                  "src": "5469:35:1",
+                  "scope": 299,
+                  "src": "5473:35:1",
                   "stateVariable": false,
                   "storageLocation": "calldata",
                   "typeDescriptions": {
@@ -3556,19 +3456,19 @@
                   },
                   "typeName": {
                     "baseType": {
-                      "id": 301,
+                      "id": 294,
                       "name": "uint256",
                       "nodeType": "ElementaryTypeName",
-                      "src": "5469:7:1",
+                      "src": "5473:7:1",
                       "typeDescriptions": {
                         "typeIdentifier": "t_uint256",
                         "typeString": "uint256"
                       }
                     },
-                    "id": 302,
+                    "id": 295,
                     "length": null,
                     "nodeType": "ArrayTypeName",
-                    "src": "5469:9:1",
+                    "src": "5473:9:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_array$_t_uint256_$dyn_storage_ptr",
                       "typeString": "uint256[]"
@@ -3578,16 +3478,16 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "5358:150:1"
+              "src": "5362:150:1"
             },
             "returnParameters": {
-              "id": 305,
+              "id": 298,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "5517:0:1"
+              "src": "5521:0:1"
             },
-            "scope": 354,
-            "src": "5336:182:1",
+            "scope": 347,
+            "src": "5340:182:1",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "external"
@@ -3595,23 +3495,23 @@
           {
             "body": null,
             "documentation": "This function is used to assign land after buying it\n@param unassignedLandId - The id of the LAND which is not assigned*",
-            "id": 311,
+            "id": 304,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
             "name": "assignLand",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 309,
+              "id": 302,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 308,
+                  "id": 301,
                   "name": "unassignedLandId",
                   "nodeType": "VariableDeclaration",
-                  "scope": 311,
-                  "src": "5705:24:1",
+                  "scope": 304,
+                  "src": "5709:24:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -3619,10 +3519,10 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 307,
+                    "id": 300,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "5705:7:1",
+                    "src": "5709:7:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -3632,16 +3532,16 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "5704:26:1"
+              "src": "5708:26:1"
             },
             "returnParameters": {
-              "id": 310,
+              "id": 303,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "5739:0:1"
+              "src": "5743:0:1"
             },
-            "scope": 354,
-            "src": "5685:55:1",
+            "scope": 347,
+            "src": "5689:55:1",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "external"
@@ -3649,23 +3549,23 @@
           {
             "body": null,
             "documentation": "@dev Entrust the contract with MANA so it can be invested for you or for someone you deposit for\n@param balanceType - 0 or 1 (SPLIT OR WHOLE)\n@param _target - Who receives the MANA in their balance\n@param _amount - How much MANA is deposited*",
-            "id": 320,
+            "id": 313,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
             "name": "depositMANA",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 318,
+              "id": 311,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 313,
+                  "id": 306,
                   "name": "balanceType",
                   "nodeType": "VariableDeclaration",
-                  "scope": 320,
-                  "src": "6035:17:1",
+                  "scope": 313,
+                  "src": "6039:17:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -3673,10 +3573,10 @@
                     "typeString": "uint8"
                   },
                   "typeName": {
-                    "id": 312,
+                    "id": 305,
                     "name": "uint8",
                     "nodeType": "ElementaryTypeName",
-                    "src": "6035:5:1",
+                    "src": "6039:5:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint8",
                       "typeString": "uint8"
@@ -3687,11 +3587,11 @@
                 },
                 {
                   "constant": false,
-                  "id": 315,
+                  "id": 308,
                   "name": "_target",
                   "nodeType": "VariableDeclaration",
-                  "scope": 320,
-                  "src": "6054:15:1",
+                  "scope": 313,
+                  "src": "6058:15:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -3699,14 +3599,94 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 314,
+                    "id": 307,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "6054:7:1",
+                    "src": "6058:7:1",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
                       "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 310,
+                  "name": "_amount",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 313,
+                  "src": "6075:15:1",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 309,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "6075:7:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "6038:53:1"
+            },
+            "returnParameters": {
+              "id": 312,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "6100:0:1"
+            },
+            "scope": 347,
+            "src": "6018:83:1",
+            "stateMutability": "nonpayable",
+            "superFunction": null,
+            "visibility": "external"
+          },
+          {
+            "body": null,
+            "documentation": "@dev Withdraw MANA from the contract\n@param balanceType - 0 or 1 (SPLIT OR WHOLE)\n@param _amount - How much MANA is being withdrawn*",
+            "id": 320,
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "withdrawMANA",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 318,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 315,
+                  "name": "balanceType",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 320,
+                  "src": "6283:17:1",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint8",
+                    "typeString": "uint8"
+                  },
+                  "typeName": {
+                    "id": 314,
+                    "name": "uint8",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "6283:5:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint8",
+                      "typeString": "uint8"
                     }
                   },
                   "value": null,
@@ -3718,7 +3698,7 @@
                   "name": "_amount",
                   "nodeType": "VariableDeclaration",
                   "scope": 320,
-                  "src": "6071:15:1",
+                  "src": "6302:15:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -3729,7 +3709,7 @@
                     "id": 316,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "6071:7:1",
+                    "src": "6302:7:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -3739,28 +3719,28 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "6034:53:1"
+              "src": "6282:36:1"
             },
             "returnParameters": {
               "id": 319,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "6096:0:1"
+              "src": "6327:0:1"
             },
-            "scope": 354,
-            "src": "6014:83:1",
+            "scope": 347,
+            "src": "6261:67:1",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "external"
           },
           {
             "body": null,
-            "documentation": "@dev Withdraw MANA from the contract\n@param balanceType - 0 or 1 (SPLIT OR WHOLE)\n@param _amount - How much MANA is being withdrawn*",
+            "documentation": "@dev Register the result of a bid.\nIf unsuccessful, transfer funds from locked to either split or\nwhole balances. If we want to cancel, call the cancelLandBid\nfunction and send funds from locked to normal balances.\nIf successful and the investors we took money from wanted SPLIT,\nwe decrease the amounts from lockedForBidding and we create a\nnew SplitLand ERC20 contract where we distribute LAND parts to\ninvestors. If the investment type is WHOLE, we just send the entire\nLAND to the investor. When distributing LAND parts, each investor\nwill get a proportional amount of LAND parts according to how much\nmoney we used from their balance, compared to total amount invested\nin that LAND.\n@param result - It can be 0, 1 or 2 (SUCCESSFUL, FAILED, CANCELLED)\n@param bidPosition - The position of the bid in the bids array*",
             "id": 327,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
-            "name": "withdrawMANA",
+            "name": "registerBidResult",
             "nodeType": "FunctionDefinition",
             "parameters": {
               "id": 325,
@@ -3769,10 +3749,10 @@
                 {
                   "constant": false,
                   "id": 322,
-                  "name": "balanceType",
+                  "name": "result",
                   "nodeType": "VariableDeclaration",
                   "scope": 327,
-                  "src": "6279:17:1",
+                  "src": "7329:12:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -3783,7 +3763,7 @@
                     "id": 321,
                     "name": "uint8",
                     "nodeType": "ElementaryTypeName",
-                    "src": "6279:5:1",
+                    "src": "7329:5:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint8",
                       "typeString": "uint8"
@@ -3795,10 +3775,10 @@
                 {
                   "constant": false,
                   "id": 324,
-                  "name": "_amount",
+                  "name": "bidPosition",
                   "nodeType": "VariableDeclaration",
                   "scope": 327,
-                  "src": "6298:15:1",
+                  "src": "7347:19:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -3809,7 +3789,7 @@
                     "id": 323,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "6298:7:1",
+                    "src": "7347:7:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -3819,28 +3799,28 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "6278:36:1"
+              "src": "7323:44:1"
             },
             "returnParameters": {
               "id": 326,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "6323:0:1"
+              "src": "7378:0:1"
             },
-            "scope": 354,
-            "src": "6257:67:1",
+            "scope": 347,
+            "src": "7297:82:1",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "external"
           },
           {
             "body": null,
-            "documentation": "@dev Register the result of a bid.\nIf unsuccessful, transfer funds from locked to either split or\nwhole balances. If we want to cancel, call the cancelLandBid\nfunction and send funds from locked to normal balances.\nIf successful and the investors we took money from wanted SPLIT,\nwe decrease the amounts from lockedForBidding and we create a\nnew SplitLand ERC20 contract where we distribute LAND parts to\ninvestors. If the investment type is WHOLE, we just send the entire\nLAND to the investor. When distributing LAND parts, each investor\nwill get a proportional amount of LAND parts according to how much\nmoney we used from their balance, compared to total amount invested\nin that LAND.\n@param result - It can be 0, 1 or 2 (SUCCESSFUL, FAILED, CANCELLED)\n@param bidPosition - The position of the bid in the bids array*",
+            "documentation": "@dev Allow anyone to deposit a LAND token in this contract and create\na SplitLand ERC20 contract where all the LAND parts are assigned\nin the constructor to msg.sender. The LAND token deposited in this contract\ncannot be transferred elsewhere unless someone has all the LAND parts\nin the balance in the SplitLand contract and calls reconstructLand.\nWhen creating a new SplitContract, create a new Land struct with\nthe address of the new contract and how many portions of LAND\nwere created.\n@param _tokenId - The id of the LAND we want to invest in\n@param landParts - Needs to be less than or equal to MAX_LAND_SPLITS\nTells the newly created SplitLand contract in how\nmany smaller parts we divided the LAND*",
             "id": 334,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
-            "name": "registerBidResult",
+            "name": "generalSplitLand",
             "nodeType": "FunctionDefinition",
             "parameters": {
               "id": 332,
@@ -3849,24 +3829,24 @@
                 {
                   "constant": false,
                   "id": 329,
-                  "name": "result",
+                  "name": "_tokenId",
                   "nodeType": "VariableDeclaration",
                   "scope": 334,
-                  "src": "7325:12:1",
+                  "src": "8255:16:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_uint8",
-                    "typeString": "uint8"
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
                   },
                   "typeName": {
                     "id": 328,
-                    "name": "uint8",
+                    "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "7325:5:1",
+                    "src": "8255:7:1",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_uint8",
-                      "typeString": "uint8"
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
                     }
                   },
                   "value": null,
@@ -3875,10 +3855,10 @@
                 {
                   "constant": false,
                   "id": 331,
-                  "name": "bidPosition",
+                  "name": "landParts",
                   "nodeType": "VariableDeclaration",
                   "scope": 334,
-                  "src": "7343:19:1",
+                  "src": "8277:17:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -3889,7 +3869,7 @@
                     "id": 330,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "7343:7:1",
+                    "src": "8277:7:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -3899,28 +3879,28 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "7319:44:1"
+              "src": "8249:46:1"
             },
             "returnParameters": {
               "id": 333,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "7376:0:1"
+              "src": "8306:0:1"
             },
-            "scope": 354,
-            "src": "7293:84:1",
+            "scope": 347,
+            "src": "8224:83:1",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "external"
           },
           {
             "body": null,
-            "documentation": "@dev Allow anyone to deposit a LAND token in this contract and create\na SplitLand ERC20 contract where all the LAND parts are assigned\nin the constructor to msg.sender. The LAND token deposited in this contract\ncannot be transferred elsewhere unless someone has all the LAND parts\nin the balance in the SplitLand contract and calls reconstructLand.\nWhen creating a new SplitContract, create a new Land struct with\nthe address of the new contract and how many portions of LAND\nwere created.\n@param _tokenId - The id of the LAND we want to invest in\n@param landParts - Needs to be less than or equal to MAX_LAND_SPLITS\nTells the newly created SplitLand contract in how\nmany smaller parts we divided the LAND*",
+            "documentation": "@dev Reconstruct and entire LAND token from the LAND parts in a SplitLand\ncontract and then send the LAND to reconstructedLandReceiver.\nThe msg.sender needs to have all the LAND parts in their balance inside\nthe SplitLand contract.\n@param id - The id of the LAND token the caller wants to reconstruct\n@param reconstructedLandReceiver - The receiver of the reconstructed LAND token*",
             "id": 341,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
-            "name": "generalSplitLand",
+            "name": "reconstructLand",
             "nodeType": "FunctionDefinition",
             "parameters": {
               "id": 339,
@@ -3929,89 +3909,9 @@
                 {
                   "constant": false,
                   "id": 336,
-                  "name": "_tokenId",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 341,
-                  "src": "8253:16:1",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_uint256",
-                    "typeString": "uint256"
-                  },
-                  "typeName": {
-                    "id": 335,
-                    "name": "uint256",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "8253:7:1",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_uint256",
-                      "typeString": "uint256"
-                    }
-                  },
-                  "value": null,
-                  "visibility": "internal"
-                },
-                {
-                  "constant": false,
-                  "id": 338,
-                  "name": "landParts",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 341,
-                  "src": "8275:17:1",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_uint256",
-                    "typeString": "uint256"
-                  },
-                  "typeName": {
-                    "id": 337,
-                    "name": "uint256",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "8275:7:1",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_uint256",
-                      "typeString": "uint256"
-                    }
-                  },
-                  "value": null,
-                  "visibility": "internal"
-                }
-              ],
-              "src": "8247:46:1"
-            },
-            "returnParameters": {
-              "id": 340,
-              "nodeType": "ParameterList",
-              "parameters": [],
-              "src": "8306:0:1"
-            },
-            "scope": 354,
-            "src": "8222:85:1",
-            "stateMutability": "nonpayable",
-            "superFunction": null,
-            "visibility": "external"
-          },
-          {
-            "body": null,
-            "documentation": "@dev Reconstruct and entire LAND token from the LAND parts in a SplitLand\ncontract and then send the LAND to reconstructedLandReceiver.\nThe msg.sender needs to have all the LAND parts in their balance inside\nthe SplitLand contract.\n@param id - The id of the LAND token the caller wants to reconstruct\n@param reconstructedLandReceiver - The receiver of the reconstructed LAND token*",
-            "id": 348,
-            "implemented": false,
-            "kind": "function",
-            "modifiers": [],
-            "name": "reconstructLand",
-            "nodeType": "FunctionDefinition",
-            "parameters": {
-              "id": 346,
-              "nodeType": "ParameterList",
-              "parameters": [
-                {
-                  "constant": false,
-                  "id": 343,
                   "name": "id",
                   "nodeType": "VariableDeclaration",
-                  "scope": 348,
+                  "scope": 341,
                   "src": "8774:10:1",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -4020,7 +3920,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 342,
+                    "id": 335,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "8774:7:1",
@@ -4034,10 +3934,10 @@
                 },
                 {
                   "constant": false,
-                  "id": 345,
+                  "id": 338,
                   "name": "reconstructedLandReceiver",
                   "nodeType": "VariableDeclaration",
-                  "scope": 348,
+                  "scope": 341,
                   "src": "8790:33:1",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -4046,7 +3946,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 344,
+                    "id": 337,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "8790:7:1",
@@ -4063,13 +3963,13 @@
               "src": "8768:56:1"
             },
             "returnParameters": {
-              "id": 347,
+              "id": 340,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "8837:0:1"
+              "src": "8835:0:1"
             },
-            "scope": 354,
-            "src": "8744:94:1",
+            "scope": 347,
+            "src": "8744:92:1",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "external"
@@ -4077,23 +3977,23 @@
           {
             "body": null,
             "documentation": "@dev Cancel a bid if it hasn't been updated for the time specified in NO_ACTION_CANCEL_BID_AFTER\n     This function should decode the bytes value, get the investors and amounts arrays,\nand send the money out of this contract and back to the investors. Remember to decrease the\nlockedForBidding value for each investor! Also update the bid status to CANCELLED\n@param bidPosition - The position of the bid in the bids array*",
-            "id": 353,
+            "id": 346,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
             "name": "cancelBidAfterNoAction",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 351,
+              "id": 344,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 350,
+                  "id": 343,
                   "name": "bidPosition",
                   "nodeType": "VariableDeclaration",
-                  "scope": 353,
-                  "src": "9344:19:1",
+                  "scope": 346,
+                  "src": "9342:19:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -4101,10 +4001,10 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 349,
+                    "id": 342,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "9344:7:1",
+                    "src": "9342:7:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -4114,35 +4014,35 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "9338:29:1"
+              "src": "9336:29:1"
             },
             "returnParameters": {
-              "id": 352,
+              "id": 345,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "9376:0:1"
+              "src": "9374:0:1"
             },
-            "scope": 354,
-            "src": "9307:70:1",
+            "scope": 347,
+            "src": "9305:70:1",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "external"
           }
         ],
-        "scope": 355,
-        "src": "61:9319:1"
+        "scope": 348,
+        "src": "61:9317:1"
       }
     ],
-    "src": "0:9381:1"
+    "src": "0:9379:1"
   },
   "legacyAST": {
-    "absolutePath": "/home/stefan/Work/RobInTheHood/chain/bankContracts/contracts/interfaces/IBank.sol",
+    "absolutePath": "/Users/jules/WebstormProjects/RobInTheHood/chain/bankContracts/contracts/interfaces/IBank.sol",
     "exportedSymbols": {
       "IBank": [
-        354
+        347
       ]
     },
-    "id": 355,
+    "id": 348,
     "nodeType": "SourceUnit",
     "nodes": [
       {
@@ -4156,12 +4056,12 @@
         "src": "0:22:1"
       },
       {
-        "absolutePath": "/home/stefan/Work/RobInTheHood/chain/bankContracts/contracts/mana/MANAToken.sol",
+        "absolutePath": "/Users/jules/WebstormProjects/RobInTheHood/chain/bankContracts/contracts/mana/MANAToken.sol",
         "file": "./.././mana/MANAToken.sol",
         "id": 59,
         "nodeType": "ImportDirective",
-        "scope": 355,
-        "sourceUnit": 2833,
+        "scope": 348,
+        "sourceUnit": 2762,
         "src": "24:35:1",
         "symbolAliases": [],
         "unitAlias": ""
@@ -4172,9 +4072,9 @@
         "contractKind": "contract",
         "documentation": null,
         "fullyImplemented": false,
-        "id": 354,
+        "id": 347,
         "linearizedBaseContracts": [
-          354
+          347
         ],
         "name": "IBank",
         "nodeType": "ContractDefinition",
@@ -5058,7 +4958,7 @@
             ],
             "name": "Land",
             "nodeType": "StructDefinition",
-            "scope": 354,
+            "scope": 347,
             "src": "819:67:1",
             "visibility": "public"
           },
@@ -5173,7 +5073,7 @@
             ],
             "name": "BidData",
             "nodeType": "StructDefinition",
-            "scope": 354,
+            "scope": 347,
             "src": "890:116:1",
             "visibility": "public"
           },
@@ -5182,7 +5082,7 @@
             "id": 143,
             "name": "MANA",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "1069:19:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -5208,7 +5108,7 @@
             "id": 145,
             "name": "MAX_LAND_OWNERS",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "1166:28:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -5234,7 +5134,7 @@
             "id": 147,
             "name": "MAX_LAND_SPLITS",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "1260:29:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -5260,7 +5160,7 @@
             "id": 149,
             "name": "BID_DURATION",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "1394:27:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -5286,7 +5186,7 @@
             "id": 151,
             "name": "NO_ACTION_CANCEL_BID_AFTER",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "1604:41:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -5312,7 +5212,7 @@
             "id": 153,
             "name": "wholeLandMANAFunds",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "1731:33:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -5338,7 +5238,7 @@
             "id": 155,
             "name": "splitLandMANAFunds",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "1852:33:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -5364,12 +5264,12 @@
             "id": 157,
             "name": "manaToken",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "1916:19:1",
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
-              "typeIdentifier": "t_contract$_MANAToken_$2832",
+              "typeIdentifier": "t_contract$_MANAToken_$2761",
               "typeString": "contract MANAToken"
             },
             "typeName": {
@@ -5377,10 +5277,10 @@
               "id": 156,
               "name": "MANAToken",
               "nodeType": "UserDefinedTypeName",
-              "referencedDeclaration": 2832,
+              "referencedDeclaration": 2761,
               "src": "1916:9:1",
               "typeDescriptions": {
-                "typeIdentifier": "t_contract$_MANAToken_$2832",
+                "typeIdentifier": "t_contract$_MANAToken_$2761",
                 "typeString": "contract MANAToken"
               }
             },
@@ -5392,7 +5292,7 @@
             "id": 159,
             "name": "landRegistry",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "1966:20:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -5419,7 +5319,7 @@
             "id": 161,
             "name": "landAddress",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "2026:19:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -5446,7 +5346,7 @@
             "id": 164,
             "name": "bids",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "2418:14:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -5484,7 +5384,7 @@
             "id": 170,
             "name": "splitBalances",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "2517:61:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -5548,7 +5448,7 @@
             "id": 176,
             "name": "wholeBalances",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "2656:61:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -5612,7 +5512,7 @@
             "id": 182,
             "name": "lockedForBidding",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "2754:64:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -5676,7 +5576,7 @@
             "id": 186,
             "name": "beingBid",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "2854:33:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -5721,7 +5621,7 @@
             "id": 190,
             "name": "landDetails",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "2994:36:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -5768,7 +5668,7 @@
             "id": 194,
             "name": "landIsInBank",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "3072:37:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -5813,7 +5713,7 @@
             "id": 198,
             "name": "unassignedLand",
             "nodeType": "VariableDeclaration",
-            "scope": 354,
+            "scope": 347,
             "src": "3114:40:1",
             "stateVariable": true,
             "storageLocation": "default",
@@ -6004,7 +5904,7 @@
               ],
               "src": "3376:9:1"
             },
-            "scope": 354,
+            "scope": 347,
             "src": "3294:92:1",
             "stateMutability": "view",
             "superFunction": null,
@@ -6085,7 +5985,7 @@
               ],
               "src": "3465:9:1"
             },
-            "scope": 354,
+            "scope": 347,
             "src": "3390:85:1",
             "stateMutability": "view",
             "superFunction": null,
@@ -6193,7 +6093,7 @@
               ],
               "src": "3575:9:1"
             },
-            "scope": 354,
+            "scope": 347,
             "src": "3479:106:1",
             "stateMutability": "view",
             "superFunction": null,
@@ -6301,7 +6201,7 @@
               ],
               "src": "3685:9:1"
             },
-            "scope": 354,
+            "scope": 347,
             "src": "3589:106:1",
             "stateMutability": "view",
             "superFunction": null,
@@ -6409,7 +6309,7 @@
               ],
               "src": "3788:9:1"
             },
-            "scope": 354,
+            "scope": 347,
             "src": "3699:99:1",
             "stateMutability": "view",
             "superFunction": null,
@@ -6490,7 +6390,7 @@
               ],
               "src": "3870:6:1"
             },
-            "scope": 354,
+            "scope": 347,
             "src": "3802:75:1",
             "stateMutability": "view",
             "superFunction": null,
@@ -6571,7 +6471,7 @@
               ],
               "src": "3955:14:1"
             },
-            "scope": 354,
+            "scope": 347,
             "src": "3881:89:1",
             "stateMutability": "view",
             "superFunction": null,
@@ -6584,7 +6484,7 @@
             "implemented": false,
             "kind": "function",
             "modifiers": [],
-            "name": "getBidCreation",
+            "name": "getBidStatus",
             "nodeType": "FunctionDefinition",
             "parameters": {
               "id": 267,
@@ -6596,7 +6496,7 @@
                   "name": "position",
                   "nodeType": "VariableDeclaration",
                   "scope": 271,
-                  "src": "4003:16:1",
+                  "src": "4091:16:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -6607,7 +6507,7 @@
                     "id": 265,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "4003:7:1",
+                    "src": "4091:7:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -6617,7 +6517,7 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "3997:26:1"
+              "src": "4085:26:1"
             },
             "returnParameters": {
               "id": 270,
@@ -6629,88 +6529,7 @@
                   "name": "",
                   "nodeType": "VariableDeclaration",
                   "scope": 271,
-                  "src": "4045:7:1",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_uint256",
-                    "typeString": "uint256"
-                  },
-                  "typeName": {
-                    "id": 268,
-                    "name": "uint256",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "4045:7:1",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_uint256",
-                      "typeString": "uint256"
-                    }
-                  },
-                  "value": null,
-                  "visibility": "internal"
-                }
-              ],
-              "src": "4044:9:1"
-            },
-            "scope": 354,
-            "src": "3974:80:1",
-            "stateMutability": "view",
-            "superFunction": null,
-            "visibility": "public"
-          },
-          {
-            "body": null,
-            "documentation": null,
-            "id": 278,
-            "implemented": false,
-            "kind": "function",
-            "modifiers": [],
-            "name": "getBidStatus",
-            "nodeType": "FunctionDefinition",
-            "parameters": {
-              "id": 274,
-              "nodeType": "ParameterList",
-              "parameters": [
-                {
-                  "constant": false,
-                  "id": 273,
-                  "name": "position",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 278,
-                  "src": "4085:16:1",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_uint256",
-                    "typeString": "uint256"
-                  },
-                  "typeName": {
-                    "id": 272,
-                    "name": "uint256",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "4085:7:1",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_uint256",
-                      "typeString": "uint256"
-                    }
-                  },
-                  "value": null,
-                  "visibility": "internal"
-                }
-              ],
-              "src": "4079:26:1"
-            },
-            "returnParameters": {
-              "id": 277,
-              "nodeType": "ParameterList",
-              "parameters": [
-                {
-                  "constant": false,
-                  "id": 276,
-                  "name": "",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 278,
-                  "src": "4127:5:1",
+                  "src": "4133:5:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -6718,10 +6537,10 @@
                     "typeString": "uint8"
                   },
                   "typeName": {
-                    "id": 275,
+                    "id": 268,
                     "name": "uint8",
                     "nodeType": "ElementaryTypeName",
-                    "src": "4127:5:1",
+                    "src": "4133:5:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint8",
                       "typeString": "uint8"
@@ -6731,10 +6550,10 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "4126:7:1"
+              "src": "4132:7:1"
             },
-            "scope": 354,
-            "src": "4058:76:1",
+            "scope": 347,
+            "src": "4064:76:1",
             "stateMutability": "view",
             "superFunction": null,
             "visibility": "public"
@@ -6742,23 +6561,23 @@
           {
             "body": null,
             "documentation": "@dev Bid for land using the Decentraland Bid contract.\nOur backend monitors this smart contract and\nuses the balances that investors entrusted us with to bid for\nthe best LAND we can find for sale. We are effectively an investment\nfund for millenials and Gen Zs. They simply send money to this\ncontract and we take care to invest it\n In the investors array we cannot mix those who want only a fraction\nof LAND and those who want a whole plot\n@param investmentType - SPLIT or WHOLE (we will divide the LAND or we give the entire LAND to one entity)\n@param landId - The id of the LAND we want to invest in\n@param investors - The addresses whose funds we will use to bid\n@param _amountsInvested - The amount we use from each investor's balance",
-            "id": 291,
+            "id": 284,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
             "name": "bidForLand",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 289,
+              "id": 282,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 280,
+                  "id": 273,
                   "name": "investmentType",
                   "nodeType": "VariableDeclaration",
-                  "scope": 291,
-                  "src": "5012:20:1",
+                  "scope": 284,
+                  "src": "5018:20:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -6766,10 +6585,10 @@
                     "typeString": "uint8"
                   },
                   "typeName": {
-                    "id": 279,
+                    "id": 272,
                     "name": "uint8",
                     "nodeType": "ElementaryTypeName",
-                    "src": "5012:5:1",
+                    "src": "5018:5:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint8",
                       "typeString": "uint8"
@@ -6780,11 +6599,11 @@
                 },
                 {
                   "constant": false,
-                  "id": 282,
+                  "id": 275,
                   "name": "landId",
                   "nodeType": "VariableDeclaration",
-                  "scope": 291,
-                  "src": "5038:14:1",
+                  "scope": 284,
+                  "src": "5044:14:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -6792,10 +6611,10 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 281,
+                    "id": 274,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "5038:7:1",
+                    "src": "5044:7:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -6806,11 +6625,11 @@
                 },
                 {
                   "constant": false,
-                  "id": 285,
+                  "id": 278,
                   "name": "investors",
                   "nodeType": "VariableDeclaration",
-                  "scope": 291,
-                  "src": "5058:28:1",
+                  "scope": 284,
+                  "src": "5064:28:1",
                   "stateVariable": false,
                   "storageLocation": "calldata",
                   "typeDescriptions": {
@@ -6819,23 +6638,114 @@
                   },
                   "typeName": {
                     "baseType": {
-                      "id": 283,
+                      "id": 276,
                       "name": "address",
                       "nodeType": "ElementaryTypeName",
-                      "src": "5058:7:1",
+                      "src": "5064:7:1",
                       "stateMutability": "nonpayable",
                       "typeDescriptions": {
                         "typeIdentifier": "t_address",
                         "typeString": "address"
                       }
                     },
-                    "id": 284,
+                    "id": 277,
                     "length": null,
                     "nodeType": "ArrayTypeName",
-                    "src": "5058:9:1",
+                    "src": "5064:9:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
                       "typeString": "address[]"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 281,
+                  "name": "_amountsInvested",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 284,
+                  "src": "5098:35:1",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_uint256_$dyn_calldata_ptr",
+                    "typeString": "uint256[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 279,
+                      "name": "uint256",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "5098:7:1",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "id": 280,
+                    "length": null,
+                    "nodeType": "ArrayTypeName",
+                    "src": "5098:9:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_uint256_$dyn_storage_ptr",
+                      "typeString": "uint256[]"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "5012:122:1"
+            },
+            "returnParameters": {
+              "id": 283,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "5145:0:1"
+            },
+            "scope": 347,
+            "src": "4993:153:1",
+            "stateMutability": "nonpayable",
+            "superFunction": null,
+            "visibility": "external"
+          },
+          {
+            "body": null,
+            "documentation": "Buy land directly without going through the bid process.\nParams are similar to bidForLand apart from marketplace which is the contract\nwhere we can buy LAND directly*",
+            "id": 299,
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "directBuyLand",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 297,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 286,
+                  "name": "marketplace",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 299,
+                  "src": "5368:19:1",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 285,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "5368:7:1",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
                     }
                   },
                   "value": null,
@@ -6844,101 +6754,10 @@
                 {
                   "constant": false,
                   "id": 288,
-                  "name": "_amountsInvested",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 291,
-                  "src": "5092:35:1",
-                  "stateVariable": false,
-                  "storageLocation": "calldata",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_array$_t_uint256_$dyn_calldata_ptr",
-                    "typeString": "uint256[]"
-                  },
-                  "typeName": {
-                    "baseType": {
-                      "id": 286,
-                      "name": "uint256",
-                      "nodeType": "ElementaryTypeName",
-                      "src": "5092:7:1",
-                      "typeDescriptions": {
-                        "typeIdentifier": "t_uint256",
-                        "typeString": "uint256"
-                      }
-                    },
-                    "id": 287,
-                    "length": null,
-                    "nodeType": "ArrayTypeName",
-                    "src": "5092:9:1",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_array$_t_uint256_$dyn_storage_ptr",
-                      "typeString": "uint256[]"
-                    }
-                  },
-                  "value": null,
-                  "visibility": "internal"
-                }
-              ],
-              "src": "5006:122:1"
-            },
-            "returnParameters": {
-              "id": 290,
-              "nodeType": "ParameterList",
-              "parameters": [],
-              "src": "5141:0:1"
-            },
-            "scope": 354,
-            "src": "4987:155:1",
-            "stateMutability": "nonpayable",
-            "superFunction": null,
-            "visibility": "external"
-          },
-          {
-            "body": null,
-            "documentation": "Buy land directly without going through the bid process.\nParams are similar to bidForLand apart from marketplace which is the contract\nwhere we can buy LAND directly*",
-            "id": 306,
-            "implemented": false,
-            "kind": "function",
-            "modifiers": [],
-            "name": "directBuyLand",
-            "nodeType": "FunctionDefinition",
-            "parameters": {
-              "id": 304,
-              "nodeType": "ParameterList",
-              "parameters": [
-                {
-                  "constant": false,
-                  "id": 293,
-                  "name": "marketplace",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 306,
-                  "src": "5364:19:1",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_address",
-                    "typeString": "address"
-                  },
-                  "typeName": {
-                    "id": 292,
-                    "name": "address",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "5364:7:1",
-                    "stateMutability": "nonpayable",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_address",
-                      "typeString": "address"
-                    }
-                  },
-                  "value": null,
-                  "visibility": "internal"
-                },
-                {
-                  "constant": false,
-                  "id": 295,
                   "name": "investmentType",
                   "nodeType": "VariableDeclaration",
-                  "scope": 306,
-                  "src": "5389:20:1",
+                  "scope": 299,
+                  "src": "5393:20:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -6946,10 +6765,10 @@
                     "typeString": "uint8"
                   },
                   "typeName": {
-                    "id": 294,
+                    "id": 287,
                     "name": "uint8",
                     "nodeType": "ElementaryTypeName",
-                    "src": "5389:5:1",
+                    "src": "5393:5:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint8",
                       "typeString": "uint8"
@@ -6960,11 +6779,11 @@
                 },
                 {
                   "constant": false,
-                  "id": 297,
+                  "id": 290,
                   "name": "landId",
                   "nodeType": "VariableDeclaration",
-                  "scope": 306,
-                  "src": "5415:14:1",
+                  "scope": 299,
+                  "src": "5419:14:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -6972,10 +6791,10 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 296,
+                    "id": 289,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "5415:7:1",
+                    "src": "5419:7:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -6986,11 +6805,11 @@
                 },
                 {
                   "constant": false,
-                  "id": 300,
+                  "id": 293,
                   "name": "investors",
                   "nodeType": "VariableDeclaration",
-                  "scope": 306,
-                  "src": "5435:28:1",
+                  "scope": 299,
+                  "src": "5439:28:1",
                   "stateVariable": false,
                   "storageLocation": "calldata",
                   "typeDescriptions": {
@@ -6999,20 +6818,20 @@
                   },
                   "typeName": {
                     "baseType": {
-                      "id": 298,
+                      "id": 291,
                       "name": "address",
                       "nodeType": "ElementaryTypeName",
-                      "src": "5435:7:1",
+                      "src": "5439:7:1",
                       "stateMutability": "nonpayable",
                       "typeDescriptions": {
                         "typeIdentifier": "t_address",
                         "typeString": "address"
                       }
                     },
-                    "id": 299,
+                    "id": 292,
                     "length": null,
                     "nodeType": "ArrayTypeName",
-                    "src": "5435:9:1",
+                    "src": "5439:9:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
                       "typeString": "address[]"
@@ -7023,11 +6842,11 @@
                 },
                 {
                   "constant": false,
-                  "id": 303,
+                  "id": 296,
                   "name": "_amountsInvested",
                   "nodeType": "VariableDeclaration",
-                  "scope": 306,
-                  "src": "5469:35:1",
+                  "scope": 299,
+                  "src": "5473:35:1",
                   "stateVariable": false,
                   "storageLocation": "calldata",
                   "typeDescriptions": {
@@ -7036,19 +6855,19 @@
                   },
                   "typeName": {
                     "baseType": {
-                      "id": 301,
+                      "id": 294,
                       "name": "uint256",
                       "nodeType": "ElementaryTypeName",
-                      "src": "5469:7:1",
+                      "src": "5473:7:1",
                       "typeDescriptions": {
                         "typeIdentifier": "t_uint256",
                         "typeString": "uint256"
                       }
                     },
-                    "id": 302,
+                    "id": 295,
                     "length": null,
                     "nodeType": "ArrayTypeName",
-                    "src": "5469:9:1",
+                    "src": "5473:9:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_array$_t_uint256_$dyn_storage_ptr",
                       "typeString": "uint256[]"
@@ -7058,16 +6877,16 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "5358:150:1"
+              "src": "5362:150:1"
             },
             "returnParameters": {
-              "id": 305,
+              "id": 298,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "5517:0:1"
+              "src": "5521:0:1"
             },
-            "scope": 354,
-            "src": "5336:182:1",
+            "scope": 347,
+            "src": "5340:182:1",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "external"
@@ -7075,23 +6894,23 @@
           {
             "body": null,
             "documentation": "This function is used to assign land after buying it\n@param unassignedLandId - The id of the LAND which is not assigned*",
-            "id": 311,
+            "id": 304,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
             "name": "assignLand",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 309,
+              "id": 302,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 308,
+                  "id": 301,
                   "name": "unassignedLandId",
                   "nodeType": "VariableDeclaration",
-                  "scope": 311,
-                  "src": "5705:24:1",
+                  "scope": 304,
+                  "src": "5709:24:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -7099,10 +6918,10 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 307,
+                    "id": 300,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "5705:7:1",
+                    "src": "5709:7:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -7112,16 +6931,16 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "5704:26:1"
+              "src": "5708:26:1"
             },
             "returnParameters": {
-              "id": 310,
+              "id": 303,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "5739:0:1"
+              "src": "5743:0:1"
             },
-            "scope": 354,
-            "src": "5685:55:1",
+            "scope": 347,
+            "src": "5689:55:1",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "external"
@@ -7129,23 +6948,23 @@
           {
             "body": null,
             "documentation": "@dev Entrust the contract with MANA so it can be invested for you or for someone you deposit for\n@param balanceType - 0 or 1 (SPLIT OR WHOLE)\n@param _target - Who receives the MANA in their balance\n@param _amount - How much MANA is deposited*",
-            "id": 320,
+            "id": 313,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
             "name": "depositMANA",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 318,
+              "id": 311,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 313,
+                  "id": 306,
                   "name": "balanceType",
                   "nodeType": "VariableDeclaration",
-                  "scope": 320,
-                  "src": "6035:17:1",
+                  "scope": 313,
+                  "src": "6039:17:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -7153,10 +6972,10 @@
                     "typeString": "uint8"
                   },
                   "typeName": {
-                    "id": 312,
+                    "id": 305,
                     "name": "uint8",
                     "nodeType": "ElementaryTypeName",
-                    "src": "6035:5:1",
+                    "src": "6039:5:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint8",
                       "typeString": "uint8"
@@ -7167,11 +6986,11 @@
                 },
                 {
                   "constant": false,
-                  "id": 315,
+                  "id": 308,
                   "name": "_target",
                   "nodeType": "VariableDeclaration",
-                  "scope": 320,
-                  "src": "6054:15:1",
+                  "scope": 313,
+                  "src": "6058:15:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -7179,14 +6998,94 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 314,
+                    "id": 307,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "6054:7:1",
+                    "src": "6058:7:1",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
                       "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 310,
+                  "name": "_amount",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 313,
+                  "src": "6075:15:1",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 309,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "6075:7:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "6038:53:1"
+            },
+            "returnParameters": {
+              "id": 312,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "6100:0:1"
+            },
+            "scope": 347,
+            "src": "6018:83:1",
+            "stateMutability": "nonpayable",
+            "superFunction": null,
+            "visibility": "external"
+          },
+          {
+            "body": null,
+            "documentation": "@dev Withdraw MANA from the contract\n@param balanceType - 0 or 1 (SPLIT OR WHOLE)\n@param _amount - How much MANA is being withdrawn*",
+            "id": 320,
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "withdrawMANA",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 318,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 315,
+                  "name": "balanceType",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 320,
+                  "src": "6283:17:1",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint8",
+                    "typeString": "uint8"
+                  },
+                  "typeName": {
+                    "id": 314,
+                    "name": "uint8",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "6283:5:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint8",
+                      "typeString": "uint8"
                     }
                   },
                   "value": null,
@@ -7198,7 +7097,7 @@
                   "name": "_amount",
                   "nodeType": "VariableDeclaration",
                   "scope": 320,
-                  "src": "6071:15:1",
+                  "src": "6302:15:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -7209,7 +7108,7 @@
                     "id": 316,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "6071:7:1",
+                    "src": "6302:7:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -7219,28 +7118,28 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "6034:53:1"
+              "src": "6282:36:1"
             },
             "returnParameters": {
               "id": 319,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "6096:0:1"
+              "src": "6327:0:1"
             },
-            "scope": 354,
-            "src": "6014:83:1",
+            "scope": 347,
+            "src": "6261:67:1",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "external"
           },
           {
             "body": null,
-            "documentation": "@dev Withdraw MANA from the contract\n@param balanceType - 0 or 1 (SPLIT OR WHOLE)\n@param _amount - How much MANA is being withdrawn*",
+            "documentation": "@dev Register the result of a bid.\nIf unsuccessful, transfer funds from locked to either split or\nwhole balances. If we want to cancel, call the cancelLandBid\nfunction and send funds from locked to normal balances.\nIf successful and the investors we took money from wanted SPLIT,\nwe decrease the amounts from lockedForBidding and we create a\nnew SplitLand ERC20 contract where we distribute LAND parts to\ninvestors. If the investment type is WHOLE, we just send the entire\nLAND to the investor. When distributing LAND parts, each investor\nwill get a proportional amount of LAND parts according to how much\nmoney we used from their balance, compared to total amount invested\nin that LAND.\n@param result - It can be 0, 1 or 2 (SUCCESSFUL, FAILED, CANCELLED)\n@param bidPosition - The position of the bid in the bids array*",
             "id": 327,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
-            "name": "withdrawMANA",
+            "name": "registerBidResult",
             "nodeType": "FunctionDefinition",
             "parameters": {
               "id": 325,
@@ -7249,10 +7148,10 @@
                 {
                   "constant": false,
                   "id": 322,
-                  "name": "balanceType",
+                  "name": "result",
                   "nodeType": "VariableDeclaration",
                   "scope": 327,
-                  "src": "6279:17:1",
+                  "src": "7329:12:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -7263,7 +7162,7 @@
                     "id": 321,
                     "name": "uint8",
                     "nodeType": "ElementaryTypeName",
-                    "src": "6279:5:1",
+                    "src": "7329:5:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint8",
                       "typeString": "uint8"
@@ -7275,10 +7174,10 @@
                 {
                   "constant": false,
                   "id": 324,
-                  "name": "_amount",
+                  "name": "bidPosition",
                   "nodeType": "VariableDeclaration",
                   "scope": 327,
-                  "src": "6298:15:1",
+                  "src": "7347:19:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -7289,7 +7188,7 @@
                     "id": 323,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "6298:7:1",
+                    "src": "7347:7:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -7299,28 +7198,28 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "6278:36:1"
+              "src": "7323:44:1"
             },
             "returnParameters": {
               "id": 326,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "6323:0:1"
+              "src": "7378:0:1"
             },
-            "scope": 354,
-            "src": "6257:67:1",
+            "scope": 347,
+            "src": "7297:82:1",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "external"
           },
           {
             "body": null,
-            "documentation": "@dev Register the result of a bid.\nIf unsuccessful, transfer funds from locked to either split or\nwhole balances. If we want to cancel, call the cancelLandBid\nfunction and send funds from locked to normal balances.\nIf successful and the investors we took money from wanted SPLIT,\nwe decrease the amounts from lockedForBidding and we create a\nnew SplitLand ERC20 contract where we distribute LAND parts to\ninvestors. If the investment type is WHOLE, we just send the entire\nLAND to the investor. When distributing LAND parts, each investor\nwill get a proportional amount of LAND parts according to how much\nmoney we used from their balance, compared to total amount invested\nin that LAND.\n@param result - It can be 0, 1 or 2 (SUCCESSFUL, FAILED, CANCELLED)\n@param bidPosition - The position of the bid in the bids array*",
+            "documentation": "@dev Allow anyone to deposit a LAND token in this contract and create\na SplitLand ERC20 contract where all the LAND parts are assigned\nin the constructor to msg.sender. The LAND token deposited in this contract\ncannot be transferred elsewhere unless someone has all the LAND parts\nin the balance in the SplitLand contract and calls reconstructLand.\nWhen creating a new SplitContract, create a new Land struct with\nthe address of the new contract and how many portions of LAND\nwere created.\n@param _tokenId - The id of the LAND we want to invest in\n@param landParts - Needs to be less than or equal to MAX_LAND_SPLITS\nTells the newly created SplitLand contract in how\nmany smaller parts we divided the LAND*",
             "id": 334,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
-            "name": "registerBidResult",
+            "name": "generalSplitLand",
             "nodeType": "FunctionDefinition",
             "parameters": {
               "id": 332,
@@ -7329,24 +7228,24 @@
                 {
                   "constant": false,
                   "id": 329,
-                  "name": "result",
+                  "name": "_tokenId",
                   "nodeType": "VariableDeclaration",
                   "scope": 334,
-                  "src": "7325:12:1",
+                  "src": "8255:16:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_uint8",
-                    "typeString": "uint8"
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
                   },
                   "typeName": {
                     "id": 328,
-                    "name": "uint8",
+                    "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "7325:5:1",
+                    "src": "8255:7:1",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_uint8",
-                      "typeString": "uint8"
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
                     }
                   },
                   "value": null,
@@ -7355,10 +7254,10 @@
                 {
                   "constant": false,
                   "id": 331,
-                  "name": "bidPosition",
+                  "name": "landParts",
                   "nodeType": "VariableDeclaration",
                   "scope": 334,
-                  "src": "7343:19:1",
+                  "src": "8277:17:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -7369,7 +7268,7 @@
                     "id": 330,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "7343:7:1",
+                    "src": "8277:7:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -7379,28 +7278,28 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "7319:44:1"
+              "src": "8249:46:1"
             },
             "returnParameters": {
               "id": 333,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "7376:0:1"
+              "src": "8306:0:1"
             },
-            "scope": 354,
-            "src": "7293:84:1",
+            "scope": 347,
+            "src": "8224:83:1",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "external"
           },
           {
             "body": null,
-            "documentation": "@dev Allow anyone to deposit a LAND token in this contract and create\na SplitLand ERC20 contract where all the LAND parts are assigned\nin the constructor to msg.sender. The LAND token deposited in this contract\ncannot be transferred elsewhere unless someone has all the LAND parts\nin the balance in the SplitLand contract and calls reconstructLand.\nWhen creating a new SplitContract, create a new Land struct with\nthe address of the new contract and how many portions of LAND\nwere created.\n@param _tokenId - The id of the LAND we want to invest in\n@param landParts - Needs to be less than or equal to MAX_LAND_SPLITS\nTells the newly created SplitLand contract in how\nmany smaller parts we divided the LAND*",
+            "documentation": "@dev Reconstruct and entire LAND token from the LAND parts in a SplitLand\ncontract and then send the LAND to reconstructedLandReceiver.\nThe msg.sender needs to have all the LAND parts in their balance inside\nthe SplitLand contract.\n@param id - The id of the LAND token the caller wants to reconstruct\n@param reconstructedLandReceiver - The receiver of the reconstructed LAND token*",
             "id": 341,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
-            "name": "generalSplitLand",
+            "name": "reconstructLand",
             "nodeType": "FunctionDefinition",
             "parameters": {
               "id": 339,
@@ -7409,89 +7308,9 @@
                 {
                   "constant": false,
                   "id": 336,
-                  "name": "_tokenId",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 341,
-                  "src": "8253:16:1",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_uint256",
-                    "typeString": "uint256"
-                  },
-                  "typeName": {
-                    "id": 335,
-                    "name": "uint256",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "8253:7:1",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_uint256",
-                      "typeString": "uint256"
-                    }
-                  },
-                  "value": null,
-                  "visibility": "internal"
-                },
-                {
-                  "constant": false,
-                  "id": 338,
-                  "name": "landParts",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 341,
-                  "src": "8275:17:1",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_uint256",
-                    "typeString": "uint256"
-                  },
-                  "typeName": {
-                    "id": 337,
-                    "name": "uint256",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "8275:7:1",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_uint256",
-                      "typeString": "uint256"
-                    }
-                  },
-                  "value": null,
-                  "visibility": "internal"
-                }
-              ],
-              "src": "8247:46:1"
-            },
-            "returnParameters": {
-              "id": 340,
-              "nodeType": "ParameterList",
-              "parameters": [],
-              "src": "8306:0:1"
-            },
-            "scope": 354,
-            "src": "8222:85:1",
-            "stateMutability": "nonpayable",
-            "superFunction": null,
-            "visibility": "external"
-          },
-          {
-            "body": null,
-            "documentation": "@dev Reconstruct and entire LAND token from the LAND parts in a SplitLand\ncontract and then send the LAND to reconstructedLandReceiver.\nThe msg.sender needs to have all the LAND parts in their balance inside\nthe SplitLand contract.\n@param id - The id of the LAND token the caller wants to reconstruct\n@param reconstructedLandReceiver - The receiver of the reconstructed LAND token*",
-            "id": 348,
-            "implemented": false,
-            "kind": "function",
-            "modifiers": [],
-            "name": "reconstructLand",
-            "nodeType": "FunctionDefinition",
-            "parameters": {
-              "id": 346,
-              "nodeType": "ParameterList",
-              "parameters": [
-                {
-                  "constant": false,
-                  "id": 343,
                   "name": "id",
                   "nodeType": "VariableDeclaration",
-                  "scope": 348,
+                  "scope": 341,
                   "src": "8774:10:1",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -7500,7 +7319,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 342,
+                    "id": 335,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "8774:7:1",
@@ -7514,10 +7333,10 @@
                 },
                 {
                   "constant": false,
-                  "id": 345,
+                  "id": 338,
                   "name": "reconstructedLandReceiver",
                   "nodeType": "VariableDeclaration",
-                  "scope": 348,
+                  "scope": 341,
                   "src": "8790:33:1",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -7526,7 +7345,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 344,
+                    "id": 337,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "8790:7:1",
@@ -7543,13 +7362,13 @@
               "src": "8768:56:1"
             },
             "returnParameters": {
-              "id": 347,
+              "id": 340,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "8837:0:1"
+              "src": "8835:0:1"
             },
-            "scope": 354,
-            "src": "8744:94:1",
+            "scope": 347,
+            "src": "8744:92:1",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "external"
@@ -7557,23 +7376,23 @@
           {
             "body": null,
             "documentation": "@dev Cancel a bid if it hasn't been updated for the time specified in NO_ACTION_CANCEL_BID_AFTER\n     This function should decode the bytes value, get the investors and amounts arrays,\nand send the money out of this contract and back to the investors. Remember to decrease the\nlockedForBidding value for each investor! Also update the bid status to CANCELLED\n@param bidPosition - The position of the bid in the bids array*",
-            "id": 353,
+            "id": 346,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
             "name": "cancelBidAfterNoAction",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 351,
+              "id": 344,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 350,
+                  "id": 343,
                   "name": "bidPosition",
                   "nodeType": "VariableDeclaration",
-                  "scope": 353,
-                  "src": "9344:19:1",
+                  "scope": 346,
+                  "src": "9342:19:1",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -7581,10 +7400,10 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 349,
+                    "id": 342,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "9344:7:1",
+                    "src": "9342:7:1",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -7594,26 +7413,26 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "9338:29:1"
+              "src": "9336:29:1"
             },
             "returnParameters": {
-              "id": 352,
+              "id": 345,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "9376:0:1"
+              "src": "9374:0:1"
             },
-            "scope": 354,
-            "src": "9307:70:1",
+            "scope": 347,
+            "src": "9305:70:1",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "external"
           }
         ],
-        "scope": 355,
-        "src": "61:9319:1"
+        "scope": 348,
+        "src": "61:9317:1"
       }
     ],
-    "src": "0:9381:1"
+    "src": "0:9379:1"
   },
   "compiler": {
     "name": "solc",
@@ -7621,7 +7440,7 @@
   },
   "networks": {},
   "schemaVersion": "3.0.1",
-  "updatedAt": "2019-04-23T00:09:35.146Z",
+  "updatedAt": "2019-04-23T12:17:51.873Z",
   "devdoc": {
     "methods": {
       "assignLand(uint256)": {

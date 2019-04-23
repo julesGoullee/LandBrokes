@@ -61,7 +61,7 @@ contract IBank {
   //Address of MANA token
   MANAToken manaToken;
 
-  //Land registru address
+  //Land registry address
   address landRegistry;
 
   //The address of the LAND ERC721
@@ -133,9 +133,9 @@ contract IBank {
     uint256 position
   ) public view returns (bytes memory);
 
-  function getBidCreation(
-    uint256 position
-  ) public view returns (uint256);
+//  function getBidCreation(
+//    uint256 position
+//  ) public view returns (uint256);
 
   function getBidStatus(
     uint256 position
@@ -164,7 +164,7 @@ contract IBank {
     uint256 landId,
     address[] calldata investors,
     uint256[] calldata _amountsInvested)
-    external;
+  external;
 
   /**
   * Buy land directly without going through the bid process.
@@ -227,7 +227,7 @@ contract IBank {
   function registerBidResult(
     uint8 result,
     uint256 bidPosition)
-    external;
+  external;
 
   /**
   * @dev Allow anyone to deposit a LAND token in this contract and create
@@ -248,7 +248,7 @@ contract IBank {
   function generalSplitLand(
     uint256 _tokenId,
     uint256 landParts)
-    external;
+  external;
 
   /**
   * @dev Reconstruct and entire LAND token from the LAND parts in a SplitLand
@@ -262,7 +262,7 @@ contract IBank {
   function reconstructLand(
     uint256 id,
     address reconstructedLandReceiver)
-    external;
+  external;
 
   /**
   * @dev Cancel a bid if it hasn't been updated for the time specified in NO_ACTION_CANCEL_BID_AFTER

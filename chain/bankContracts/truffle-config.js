@@ -1,21 +1,17 @@
-var HDWalletProvider = require("truffle-hdwallet-provider");
-
-require('dotenv').config()
-
-var mnemonic = process.env.MNEMONIC
-var rpc = process.env.RPC
+require('dotenv').config();
+// const HDWalletProvider = require("truffle-hdwallet-provider");
+// const mnemonic = process.env.MNEMONIC;
+// const rpc = process.env.RPC;
 
 module.exports = {
 
   networks: {
 
     development: {
-      host: "ganache",
+      host: "localhost",
       port: 8545,
       network_id: "*",
       from: "0x90f8bf6a479f320ead074411a4b0e7944ea8c9c1",
-      gas: 7000000,
-      gasPrice: 20000000000
     }
 
   },
