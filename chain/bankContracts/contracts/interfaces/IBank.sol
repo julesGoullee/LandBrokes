@@ -112,17 +112,17 @@ contract IBank {
 
   function getSplitBalance(
     address who,
-    bytes memory hashedCoinTicker
+    bytes32 hashedCoinTicker
   ) public view returns (uint256);
 
   function getWholeBalance(
     address who,
-    bytes memory hashedCoinTicker
+    bytes32 hashedCoinTicker
   ) public view returns (uint256);
 
   function getLockedFunds(
     address who,
-    bytes memory coinTicker
+    bytes32 coinTicker
   ) public view returns (uint256);
 
   function landIsBeingBid(
