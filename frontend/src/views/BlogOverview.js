@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Container, Row, Col, Card, CardHeader, CardBody } from "shards-react";
-
+// import Cards from 'react-credit-cards';
 import PageTitle from "./../components/common/PageTitle";
 import SmallStats from "./../components/common/SmallStats";
 
@@ -124,10 +124,19 @@ const BlogOverview = ({ smallStats }) => (
               </tbody>
             </table>
           </CardBody>
+          {/* <Cards
+              number={FormInput.number.value}
+              name={FormInput.name.value}
+              expiry={FormInput.expiry.value}
+              cvc={FormInput.cvc.value}
+              // focused={state.focused}
+              >
+              </Cards> */}
         </Card>
       </Col>
     </Row>
   </Container>
+ 
 );
 
 BlogOverview.propTypes = {
