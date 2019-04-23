@@ -7,11 +7,14 @@ const ESTATE_SYMBOL = 'EST';
 const LANDRegistry = artifacts.require('LANDRegistry');
 const EstateRegistry = artifacts.require('EstateRegistry');
 const LANDProxy = artifacts.require('LANDProxy');
+const Marketplace = artifacts.require('Marketplace');
+const addressManaToken = '0x5b1869D9A4C187F2EAa108f3062412ecf0526b24';
 
 module.exports = async function (deployer, network, accounts) {
 
   if(network === 'development'){
 
+    // Land registry with proxy
     await deployer.deploy(LANDProxy, { from: accounts[0] });
     await deployer.deploy(LANDRegistry, { from: accounts[0] });
 
@@ -41,6 +44,16 @@ module.exports = async function (deployer, network, accounts) {
     await land.ping({ from: accounts[1] });
     await land.ping({ from: accounts[2] });
     await land.ping({ from: accounts[3] });
+
+    // Marketplace
+
+    const params = [
+      addressManaToken,
+      LANDProxy.address,
+      accounts[0]
+    ];
+
+    await deployer.deploy(Marketplace, ...params, { from: accounts[0] });
 
   } else if (network === "ropsten") {}
 

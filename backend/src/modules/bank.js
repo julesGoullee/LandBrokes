@@ -27,7 +27,7 @@ class Bank {
 
     assert(!this.initilized, 'already_initialized');
 
-    this.provider = new Ethers.providers.InfuraProvider(Config.network, Config.infuraApiKey);
+    this.provider = Config.network === 'development' ? new Ethers.providers.JsonRpcProvider('http://localhost:3545') : new Ethers.providers.InfuraProvider(Config.network, Config.infuraApiKey);
     this.wallet = new Ethers.Wallet(Config.privateKey, this.provider);
     this.bankContract = new Ethers.Contract(Config.contractsAddress[Config.network].addressContractBank, BankContractABI, this.wallet);
     this.initilized = true;
