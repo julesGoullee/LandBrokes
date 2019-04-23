@@ -24,15 +24,15 @@ contract IVoteCredit {
 
   function proposeParamVote(
     uint8 _type,
-    string ipfsDetails
+    string calldata ipfsDetails
   ) external;
 
   function proposeNewFormula(
-    string formulaOnIpfs
+    string calldata formulaOnIpfs
   ) external;
 
   function cancelProposal(
-    uint256 nonce;
+    uint256 nonce
   ) external;
 
   function vote(

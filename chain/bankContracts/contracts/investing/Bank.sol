@@ -553,4 +553,73 @@ contract Bank is IBank, Ownable {
 
     }
 
+    //GETTERS
+
+    function getDepositedLandSplitAddress(
+      uint256 landID
+    ) public view returns (address) {
+
+      return landDetails[landID].splitLandToken;
+
+    }
+
+    function getDepositedLandParts(
+      uint256 landID
+    ) public view returns (uint256) {
+
+      return landDetails[landID].parts;
+
+    }
+
+    function getSplitBalance(
+      address who,
+      bytes32 hashedCoinTicker
+    ) public view returns (uint256) {
+
+      return splitBalances[who][hashedCoinTicker];
+
+    }
+
+    function getWholeBalance(
+      address who,
+      bytes32 hashedCoinTicker
+    ) public view returns (uint256) {
+
+      return wholeBalances[who][hashedCoinTicker];
+
+    }
+
+    function getLockedFunds(
+      address who,
+      bytes32 coinTicker
+    ) public view returns (uint256) {
+
+      return lockedForBidding[who][coinTicker];
+
+    }
+
+    function landIsBeingBid(
+      uint256 landId
+    ) public view returns (bool) {
+
+      return beingBid[landId];
+
+    }
+
+    function getBidInvestorData(
+      uint256 position
+    ) public view returns (bytes memory) {
+
+      return bids[position].bidData;
+
+    }
+
+    function getBidStatus(
+      uint256 position
+    ) public view returns (uint8) {
+
+      return bids[position].bidStatus;
+
+    }
+
 }
