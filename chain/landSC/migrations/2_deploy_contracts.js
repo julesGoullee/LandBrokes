@@ -60,6 +60,7 @@ module.exports = async function (deployer, network, accounts) {
   console.log(`
     LANDProxy: ${LANDProxy.address}
     LANDRegistry: ${LANDRegistry.address}
+    Marketplace: ${Marketplace.address}
   `);
 
 };
