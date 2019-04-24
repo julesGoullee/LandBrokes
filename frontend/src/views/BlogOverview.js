@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Container, Row, Col, Card, CardHeader, CardBody } from "shards-react";
-
+// import Cards from 'react-credit-cards';
 import PageTitle from "./../components/common/PageTitle";
 import SmallStats from "./../components/common/SmallStats";
 
@@ -41,12 +41,12 @@ const BlogOverview = ({ smallStats }) => (
     </Col>
     <Col className="mb-4">
     </Col>
-    <Col className="mb-4">  
-    </Col>
     <Col className="mb-4">
     </Col>
     <Col className="mb-4">
-      
+    </Col>
+    <Col className="mb-4">
+
     </Col>
     <Col className="mb-4">
     </Col>
@@ -124,10 +124,19 @@ const BlogOverview = ({ smallStats }) => (
               </tbody>
             </table>
           </CardBody>
+          {/* <Cards
+              number={FormInput.number.value}
+              name={FormInput.name.value}
+              expiry={FormInput.expiry.value}
+              cvc={FormInput.cvc.value}
+              // focused={state.focused}
+              >
+              </Cards> */}
         </Card>
       </Col>
     </Row>
   </Container>
+
 );
 
 BlogOverview.propTypes = {
@@ -193,8 +202,8 @@ BlogOverview.defaultProps = {
           data: [2, 3, 3, 3, 4, 3, 3]
         }
       ]
-    },
-    {
+    }
+    /*{
       label: "New Customers",
       value: "29",
       percentage: "2.71%",
@@ -231,7 +240,7 @@ BlogOverview.defaultProps = {
           data: [3, 2, 3, 2, 4, 5, 4]
         }
       ]
-    }
+    }*/
   ]
 };
 

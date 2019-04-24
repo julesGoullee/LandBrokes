@@ -12,6 +12,8 @@ import Errors from "./views/Errors";
 import ComponentsOverview from "./views/ComponentsOverview";
 import Tables from "./views/Tables";
 import BlogPosts from "./views/BlogPosts";
+import Test from "./views/Test";
+import Tablesbackup from "./views/tablesbackup";
 
 export default [
   {
@@ -54,5 +56,15 @@ export default [
     path: "/blog-posts",
     layout: DefaultLayout,
     component: BlogPosts
+  },
+  {
+    path: "/test",
+    layout: DefaultLayout,
+    component: Test
+  },
+  {
+    path: "/tablesbackup",
+    layout: DefaultLayout,
+    component: Tablesbackup
   }
 ];

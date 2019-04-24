@@ -3,18 +3,13 @@ export default function() {
     {
       title: "Overview",
       to: "/blog-overview",
-      htmlBefore: '<i class="material-icons">edit</i>',
+      htmlBefore: '<i class="material-icons">grid_on</i>',
       htmlAfter: ""
     },
     {
       title: "Credit",
-      htmlBefore: '<i class="material-icons">vertical_split</i>',
+      htmlBefore: '<i class="material-icons">credit_card</i>',
       to: "/tables",
-    },
-    {
-      title: "Profile",
-      htmlBefore: '<i class="material-icons">person</i>',
-      to: "/user-profile-lite",
     }
   ];
 }

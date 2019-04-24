@@ -40,7 +40,7 @@ class SidebarMainNavbar extends React.Component {
               />
               {!hideLogoText && (
                 <span className="d-none d-md-inline ml-1">
-                  Shards Dashboard
+                   Dashboard
                 </span>
               )}
             </div>
@@ -50,7 +50,7 @@ class SidebarMainNavbar extends React.Component {
             className="toggle-sidebar d-sm-inline d-md-none d-lg-none"
             onClick={this.handleToggleSidebar}
           >
-            <i className="material-icons">&#xE5C4;</i>
+            {/* <i className="material-icons">&#xE5C4;</i> */}
           </a>
         </Navbar>
       </div>
