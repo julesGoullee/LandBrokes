@@ -17,8 +17,6 @@ class Bank {
 
   constructor() {
 
-    this.tokenAddress = Config.tokenAddress;
-    this.marketplaceAddress = Config.contractsAddress[Config.network].decentralandMarketplaceContract;
     this.initilized = false;
 
   }
@@ -27,9 +25,9 @@ class Bank {
 
     assert(!this.initilized, 'already_initialized');
 
-    this.provider = Config.network === 'development' ? new Ethers.providers.JsonRpcProvider('http://localhost:3545') : new Ethers.providers.InfuraProvider(Config.network, Config.infuraApiKey);
+    this.provider = Config.network === 'development' ? new Ethers.providers.JsonRpcProvider('http://localhost:8545') : new Ethers.providers.InfuraProvider(Config.network, Config.infuraApiKey);
     this.wallet = new Ethers.Wallet(Config.privateKey, this.provider);
-    this.bankContract = new Ethers.Contract(Config.contractsAddress[Config.network].addressContractBank, BankContractABI, this.wallet);
+    this.bankContract = new Ethers.Contract(Config.contractsAddress[Config.network].addressBank, BankContractABI, this.wallet);
     this.initilized = true;
 
   }
@@ -163,7 +161,7 @@ class Bank {
     assert(this.initilized, 'not_initialized');
 
     const tx = await this.bankContract.directBuyLand(
-      this.marketplaceAddress,
+      Config.contractsAddress[Config.network].addressDecentralandMarketplace,
       investmentType === 'split' ? 0 : 1,
       landId,
       investorsData.map(investorData => investorData.address),

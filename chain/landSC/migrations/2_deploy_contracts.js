@@ -3,16 +3,31 @@ const ESTATE_SYMBOL = 'EST';
 
 // const LAND_NAME = 'Decentraland LAND';
 // const LAND_SYMBOL = 'LAND';
+const defaultMANAAmount = '10000000000000000000';
 
+const MANAToken = artifacts.require('MANAToken');
 const LANDRegistry = artifacts.require('LANDRegistry');
 const EstateRegistry = artifacts.require('EstateRegistry');
 const LANDProxy = artifacts.require('LANDProxy');
 const Marketplace = artifacts.require('Marketplace');
-const addressManaToken = '0x5b1869D9A4C187F2EAa108f3062412ecf0526b24';
 
 module.exports = async function (deployer, network, accounts) {
 
   if(network === 'development'){
+
+    // MANA token
+
+    await deployer.deploy(MANAToken, { from: accounts[0] });
+
+    const mana = await MANAToken.deployed();
+
+    //Give MANA to each address
+
+    for(let i = 0; i < accounts.length; i++){
+
+      await mana.mint(accounts[i], defaultMANAAmount, { from: accounts[0] });
+
+    }
 
     // Land registry with proxy
     await deployer.deploy(LANDProxy, { from: accounts[0] });
@@ -47,17 +62,21 @@ module.exports = async function (deployer, network, accounts) {
 
     // Marketplace
 
+    await deployer.deploy(Marketplace, { from: accounts[0] });
+    const marketplace = await Marketplace.deployed();
+
     const params = [
-      addressManaToken,
+      MANAToken.address,
       LANDProxy.address,
       accounts[0]
     ];
 
-    await deployer.deploy(Marketplace, ...params, { from: accounts[0] });
+    await marketplace.initialize(...params);
 
   } else if (network === "ropsten") {}
 
   console.log(`
+    MANAToken: ${MANAToken.address}
     LANDProxy: ${LANDProxy.address}
     LANDRegistry: ${LANDRegistry.address}
     Marketplace: ${Marketplace.address}

@@ -36,11 +36,28 @@ describe('Bank', () => {
     await bank.init();
 
     expect(bank.initilized).to.be.true;
+    expect(bank.provider).to.be.an.instanceOf(Ethers.providers.JsonRpcProvider);
+    expect(bank.wallet).to.be.an.instanceOf(Ethers.Wallet);
+    expect(bank.bankContract).to.be.an.instanceOf(Ethers.Contract);
+
+    await expect(bank.init() ).to.be.rejectedWith('already_initialized');
+
+  });
+
+  it('Should init production', async () => {
+
+    Config.network = 'homestead';
+    const bank = new Bank();
+
+    await bank.init();
+
+    expect(bank.initilized).to.be.true;
     expect(bank.provider).to.be.an.instanceOf(Ethers.providers.InfuraProvider);
     expect(bank.wallet).to.be.an.instanceOf(Ethers.Wallet);
     expect(bank.bankContract).to.be.an.instanceOf(Ethers.Contract);
 
     await expect(bank.init() ).to.be.rejectedWith('already_initialized');
+    Config.network = 'development';
 
   });
 
@@ -219,7 +236,7 @@ describe('Bank', () => {
 
         expect(this.bank.bankContract.directBuyLand.calledOnce).to.be.true;
         expect(this.bank.bankContract.directBuyLand.calledWith(
-          Config.contractsAddress[Config.network].decentralandMarketplaceContract,
+          Config.contractsAddress[Config.network].addressDecentralandMarketplace,
           0,
           'landId',
           [investorsData[0].address, investorsData[1].address],
@@ -245,7 +262,7 @@ describe('Bank', () => {
 
         expect(this.bank.bankContract.directBuyLand.calledOnce).to.be.true;
         expect(this.bank.bankContract.directBuyLand.calledWith(
-          Config.contractsAddress[Config.network].decentralandMarketplaceContract,
+          Config.contractsAddress[Config.network].addressDecentralandMarketplace,
           1,
           'landId',
           [investorsData[0].address],
