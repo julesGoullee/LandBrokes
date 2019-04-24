@@ -41,12 +41,12 @@ const BlogOverview = ({ smallStats }) => (
     </Col>
     <Col className="mb-4">
     </Col>
-    <Col className="mb-4">  
-    </Col>
     <Col className="mb-4">
     </Col>
     <Col className="mb-4">
-      
+    </Col>
+    <Col className="mb-4">
+
     </Col>
     <Col className="mb-4">
     </Col>
@@ -136,7 +136,7 @@ const BlogOverview = ({ smallStats }) => (
       </Col>
     </Row>
   </Container>
- 
+
 );
 
 BlogOverview.propTypes = {
@@ -202,8 +202,8 @@ BlogOverview.defaultProps = {
           data: [2, 3, 3, 3, 4, 3, 3]
         }
       ]
-    },
-    {
+    }
+    /*{
       label: "New Customers",
       value: "29",
       percentage: "2.71%",
@@ -240,7 +240,7 @@ BlogOverview.defaultProps = {
           data: [3, 2, 3, 2, 4, 5, 4]
         }
       ]
-    }
+    }*/
   ]
 };
 
