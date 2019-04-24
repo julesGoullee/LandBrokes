@@ -10,11 +10,6 @@ export default function() {
       title: "Credit",
       htmlBefore: '<i class="material-icons">credit_card</i>',
       to: "/tables",
-    },
-    {
-      title: "Profile",
-      htmlBefore: '<i class="material-icons">person</i>',
-      to: "/user-profile-lite",
     }
   ];
 }
