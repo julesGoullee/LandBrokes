@@ -5,7 +5,7 @@ const Config = require(path.join(srcDir, '../config') );
 const Utils = require(path.join(srcDir, '/modules/utils') );
 const Bank = require(path.join(srcDir, '/modules/bank') );
 
-describe.only('Bank', () => {
+describe('Bank', () => {
 
   beforeEach( () => {
 
