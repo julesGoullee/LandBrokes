@@ -23,7 +23,6 @@ describe.only('Bank', () => {
 
     const bank = new Bank();
 
-    expect(bank.tokenAddress).to.be.eq(Config.tokenAddress);
     expect(bank.initilized).to.be.false;
 
   });
