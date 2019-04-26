@@ -1,12 +1,13 @@
 pragma solidity 0.5.7;
 
-//import "./.././interfaces/IBid.sol";
-//import "../../node_modules/openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
-import "./.././investing/SplitLand.sol";
-import "./.././interfaces/IBank.sol";
-import "../../node_modules/openzeppelin-solidity/contracts/ownership/Ownable.sol";
-import "../../node_modules/openzeppelin-solidity/contracts/utils/Address.sol";
-import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "openzeppelin-solidity/contracts/utils/Address.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+
+//import "../interfaces/IBid.sol";
+import "../investing/SplitLand.sol";
+import "../interfaces/IBank.sol";
+import "../interfaces/decentraland/IMarketplace.sol";
 
 contract Bank is IBank, Ownable {
 
@@ -19,13 +20,18 @@ contract Bank is IBank, Ownable {
   address decentralandBid;
 
   bytes nullBytes = bytes("0");
+  /**
+   * @dev Magic value to be returned upon successful reception of an NFT
+   *  Equals to `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`
+   */
+  bytes4 constant ERC721_RECEIVED = 0xf0b9e5ba;
 
   modifier checkBeforeBuying(uint8 investmentType,
     uint256 investorsLength,
     uint256 amountsInvestedLength,
     uint256 landId) {
 
-    require(investmentType <= 1, "The investment type needs to be between bounds");
+    require(investmentType == 0 || investmentType == 1, "The investment type needs to be between bounds");
     require(investorsLength == amountsInvestedLength,
       "The investors and _amountsInvested arrays do not have the same length");
     require(landIsInBank[landId] == false, "The land specified is already owned by the bank");
@@ -37,8 +43,8 @@ contract Bank is IBank, Ownable {
 
     } else if (investmentType == 1) {
 
-      require(investorsLength >= 0,
-        "With a split investment there needs to be a positive amount of investors");
+      require(investorsLength > 1,
+        "With a split investment there needs to be more than one investor");
 
     }
 
@@ -64,10 +70,11 @@ contract Bank is IBank, Ownable {
     uint16 _max_land_splits,
     uint256 _maxBidDuration,
     uint256 _noActionCancelAfter,
-    address _manaToken,
-    address _landToken,
-    address _decentralandBid,
-    address _landRegistry
+    address _addressManaToken,
+    address _addressMarketplace,
+    address _addressLandToken,
+    address _addressDecentralandBid,
+    address _addressLandRegistry
   ) public {
 
     require(_maxLandOwners > 0, "You need a positive number of land owners");
@@ -80,10 +87,11 @@ contract Bank is IBank, Ownable {
     MAX_LAND_SPLITS = _max_land_splits;
     BID_DURATION = _maxBidDuration;
     NO_ACTION_CANCEL_BID_AFTER = _noActionCancelAfter;
-    manaToken = MANAToken(_manaToken);
-    landAddress = _landToken;
-    decentralandBid = _decentralandBid;
-    landRegistry = _landRegistry;
+    manaToken = IERC20(_addressManaToken);
+    marketplace = Marketplace(_addressMarketplace);
+    landAddress = _addressLandToken;
+    decentralandBid = _addressDecentralandBid;
+    landRegistry = _addressLandRegistry;
     //decentralandBid = IBid(_decentralandBid);
 
 
@@ -118,6 +126,36 @@ contract Bank is IBank, Ownable {
     require(_noActionCancelAfter > 0, "_noActionCancelAfter has to be positive");
 
     NO_ACTION_CANCEL_BID_AFTER = _noActionCancelAfter;
+
+  }
+
+  function addSplitInvestor(address investor) internal {
+
+    if (splitBalances[investor][MANA] == 0) {
+
+      splitBalancesIndices.push(investor);
+
+    }
+
+  }
+
+  function removeSplitInvestor(address investor) internal {
+
+    uint length = splitBalancesIndices.length;
+
+    for (uint i = 0; i < length; i++) {
+
+      if(splitBalancesIndices[i] == investor){
+
+        splitBalancesIndices[i] = splitBalancesIndices[length - 1];
+        delete splitBalancesIndices[length - 1];
+        splitBalancesIndices.length--;
+        break;
+
+      }
+
+    }
+
 
   }
 
@@ -213,74 +251,65 @@ contract Bank is IBank, Ownable {
   }
 
   function directBuyLand(
-    address marketplace,
-    uint8 investmentType,
-    uint256 landId,
-    address[] calldata investors,
+    uint8 _investmentType,
+    uint256 _landId,
+    address[] calldata _investors,
     uint256[] calldata _amountsInvested
-  ) external onlyOwner
-  checkBeforeBuying(investmentType, investors.length,
-    _amountsInvested.length, landId) {
+  ) external onlyOwner checkBeforeBuying(_investmentType, _investors.length, _amountsInvested.length, _landId) {
 
     uint256 totalToInvest = computeTotalInvested(_amountsInvested);
 
-    if (investmentType == 0) {
+    if (_investmentType == 0) {
 
       require(wholeLandMANAFunds >= totalToInvest,
         "The is not enough MANA for whole investments");
 
       wholeLandMANAFunds = wholeLandMANAFunds.sub(totalToInvest);
 
-      wholeBalances[investors[0]][MANA] =
-      wholeBalances[investors[0]][MANA].sub(_amountsInvested[0]);
+      wholeBalances[_investors[0]][MANA] = wholeBalances[_investors[0]][MANA].sub(_amountsInvested[0]);
 
-    } else if (investmentType == 1) {
+    } else if (_investmentType == 1) {
 
       require(splitLandMANAFunds >= totalToInvest,
         "The is not enough MANA for split investments");
 
       splitLandMANAFunds = splitLandMANAFunds.sub(totalToInvest);
 
-      for (uint j = 0; j < investors.length; j++) {
+      for (uint j = 0; j < _investors.length; j++) {
 
-        splitBalances[investors[j]][MANA] =
-        splitBalances[investors[j]][MANA].sub(_amountsInvested[j]);
+        splitBalances[_investors[j]][MANA] = splitBalances[_investors[j]][MANA].sub(_amountsInvested[j]);
+
+        if(splitBalances[_investors[j]][MANA] == 0){
+
+          removeSplitInvestor(_investors[j]);
+
+        }
 
       }
 
     }
 
-    //Mitigate front-running
-    manaToken.approve(marketplace, 0);
+    // Mitigate front-running
+    manaToken.approve(address(marketplace), 0);
 
-    //Allow the bid contract to get MANA from this contract
-    require(manaToken.approve(marketplace, totalToInvest) == true,
-      "Could not approve MANA to directly buy LAND");
+    // Allow the bank contract to get MANA from this contract
+    manaToken.approve(address(marketplace), totalToInvest);
 
-    bool status;
-    bytes memory result;
+    // Call the executeOrder from the marketplace
+    marketplace.executeOrder(landAddress, _landId, totalToInvest);
 
-    //Call the executeOrder function from the marketplace
-    (status, result) = marketplace.call(
-      abi.encode(
-        bytes4(keccak256("executeOrder(address, uint256, uint256)")),
-        landAddress,
-        landId, totalToInvest));
+    landIsInBank[_landId] = true;
 
-    require(status == true, "Could not buy LAND");
+    bytes memory encodedInvestors = abi.encode(_investors, _amountsInvested);
 
-    landIsInBank[landId] = true;
+    unassignedLand[_landId] = encodedInvestors;
 
-    bytes memory encodedInvestors =
-    abi.encode(investors, _amountsInvested);
-
-    unassignedLand[landId] = encodedInvestors;
-
-    emit BoughtLand(landId);
+    assignLand(_landId);
+    emit BoughtLand(_landId);
 
   }
 
-  function assignLand(uint256 unassignedLandId) external onlyOwner {
+  function assignLand(uint256 unassignedLandId) public onlyOwner {
 
     require(keccak256(unassignedLand[unassignedLandId]) != keccak256(nullBytes),
       "This land was already assigned");
@@ -322,59 +351,56 @@ contract Bank is IBank, Ownable {
 
     } else {
 
-      address newSplitLand =
-      address(new SplitLand(investors, money, MAX_LAND_SPLITS, unassignedLandId));
+      ISplitLand newSplitLand = new SplitLand(investors, money, MAX_LAND_SPLITS, unassignedLandId);
 
       Land memory newLandData = Land(newSplitLand, MAX_LAND_SPLITS);
 
       landDetails[unassignedLandId] = newLandData;
 
-      emit SplitUnassignedLand(newSplitLand, unassignedLandId, MAX_LAND_SPLITS);
+      emit SplitUnassignedLand(address(newSplitLand), unassignedLandId, MAX_LAND_SPLITS);
 
     }
 
   }
 
-  function depositMANA(uint8 balanceType, address _target, uint256 _amount) external {
+  function depositMANA(uint8 _balanceType, address _target, uint256 _amount) external {
 
     require(manaToken.balanceOf(msg.sender) >= _amount,
       "You do not have that much MANA to deposit");
 
-    require(balanceType <= 1, "The balance type needs to be 0 or 1");
+    require(_balanceType == 0 || _balanceType == 1, "The balance type needs to be 0 or 1");
 
     manaToken.transferFrom(msg.sender, address(this), _amount);
 
-    if (balanceType == 0) {
+    if (_balanceType == 0) {
 
-      wholeBalances[_target][MANA] =
-      wholeBalances[_target][MANA].add(_amount);
+      wholeBalances[_target][MANA] = wholeBalances[_target][MANA].add(_amount);
 
       wholeLandMANAFunds = wholeLandMANAFunds.add(_amount);
 
     } else {
 
-      splitBalances[_target][MANA] =
-      splitBalances[_target][MANA].add(_amount);
+      addSplitInvestor(_target);
+      splitBalances[_target][MANA] = splitBalances[_target][MANA].add(_amount);
 
       splitLandMANAFunds = splitLandMANAFunds.add(_amount);
 
     }
 
-    emit DepositedMANA(balanceType, msg.sender, _target, _amount);
+    emit DepositedMANA(_balanceType, msg.sender, _target, _amount);
 
   }
 
-  function withdrawMANA(uint8 balanceType, uint256 _amount) external {
+  function withdrawMANA(uint8 _balanceType, uint256 _amount) external {
 
-    require(balanceType <= 1, "The balance type needs to be 0 or 1");
+    require(_balanceType == 0 || _balanceType == 1, "The balance type needs to be 0 or 1");
 
-    if (balanceType == 0) {
+    if (_balanceType == 0) {
 
       require(wholeBalances[msg.sender][MANA] >= _amount,
         "You do not have that much MANA for whole investments");
 
-      wholeBalances[msg.sender][MANA] =
-      wholeBalances[msg.sender][MANA].sub(_amount);
+      wholeBalances[msg.sender][MANA] = wholeBalances[msg.sender][MANA].sub(_amount);
 
       wholeLandMANAFunds = wholeLandMANAFunds.sub(_amount);
 
@@ -383,17 +409,22 @@ contract Bank is IBank, Ownable {
       require(splitBalances[msg.sender][MANA] >= _amount,
         "You do not have that much MANA for split investments");
 
-      splitBalances[msg.sender][MANA] =
-      splitBalances[msg.sender][MANA].sub(_amount);
+      splitBalances[msg.sender][MANA] = splitBalances[msg.sender][MANA].sub(_amount);
 
       splitLandMANAFunds = splitLandMANAFunds.sub(_amount);
+
+      if(splitBalances[msg.sender][MANA] == 0){
+
+        removeSplitInvestor(msg.sender);
+
+      }
 
     }
 
     require(manaToken.transfer(msg.sender, _amount) == true,
-      "Could not transfer money in the withdraw function");
+      "Could not transfer funds in the withdraw function");
 
-    emit WithdrewMANA(balanceType, msg.sender, _amount);
+    emit WithdrewMANA(_balanceType, msg.sender, _amount);
 
   }
 
@@ -538,11 +569,31 @@ contract Bank is IBank, Ownable {
 
   //GETTERS
 
-  function getDepositedLandSplitAddress(
+  function getSplitInvestorsData() public view returns (address[] memory investorsAddress, uint256[] memory amountInvested) {
+
+    uint length = splitBalancesIndices.length;
+
+    address[] memory investorsAddress = new address[](length);
+    uint256[] memory amountInvested = new uint256[](length);
+
+    for (uint i = 0; i < length; i++) {
+
+      address investor = splitBalancesIndices[i];
+      uint256 balance = splitBalances[investor][MANA];
+      investorsAddress[i] = investor;
+      amountInvested[i] = balance;
+
+    }
+
+    return (investorsAddress, amountInvested);
+
+  }
+
+  function getLandTokenSplitAddress(
     uint256 landID
   ) public view returns (address) {
 
-    return landDetails[landID].splitLandToken;
+    return address(landDetails[landID].splitLandToken);
 
   }
 
@@ -602,6 +653,17 @@ contract Bank is IBank, Ownable {
   ) public view returns (uint8) {
 
     return bids[position].bidStatus;
+
+  }
+
+  function onERC721Received(
+    address _operator,
+    address _from,
+    uint256 _tokenId,
+    bytes memory _data
+  ) public returns (bytes4) {
+
+    return ERC721_RECEIVED;
 
   }
 

@@ -1,18 +1,18 @@
 pragma solidity ^0.4.23;
 
-import "./.././Storage.sol";
+import "../Storage.sol";
 
-import "./.././upgradable/Ownable.sol";
+import "../upgradable/Ownable.sol";
 
-import "./.././upgradable/IApplication.sol";
+import "../upgradable/IApplication.sol";
 
-import "../../node_modules/erc821/contracts/FullAssetRegistry.sol";
+import "erc821/contracts/FullAssetRegistry.sol";
 
-import "./.././land/ILANDRegistry.sol";
+import "../land/ILANDRegistry.sol";
 
-import "./.././metadata/IMetadataHolder.sol";
+import "../metadata/IMetadataHolder.sol";
 
-import "./.././estate/IEstateRegistry.sol";
+import "../estate/IEstateRegistry.sol";
 
 
 /* solium-disable function-order */

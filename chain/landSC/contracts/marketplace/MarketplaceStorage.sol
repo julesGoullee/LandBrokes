@@ -17,7 +17,7 @@ contract ERC721Interface {
   function approve(address _to, uint256 _tokenId) public;
   function getApproved(uint256 _tokenId) public view returns (address);
   function isApprovedForAll(address _owner, address _operator) public view returns (bool);
-  function safeTransferFrom(address _from, address _to, uint256 _tokenId) public;
+  function transferFrom(address _from, address _to, uint256 _tokenId) public; //TODO safeTransferFrom revert
   function supportsInterface(bytes4) public view returns (bool);
 }
 

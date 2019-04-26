@@ -1,8 +1,11 @@
 pragma solidity 0.5.7;
 
-import "./.././mana/MANAToken.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
+import "openzeppelin-solidity/contracts/token/ERC721/IERC721Receiver.sol";
+import "../interfaces/decentraland/IMarketplace.sol";
+import "./ISplitLand.sol";
 
-contract IBank {
+contract IBank is IERC721Receiver {
 
   //Functions having onlyOwner are managed by our backend
 
@@ -19,7 +22,7 @@ contract IBank {
 
   struct Land {
 
-    address splitLandToken;
+    ISplitLand splitLandToken;
 
     uint256 parts;
 
@@ -59,7 +62,10 @@ contract IBank {
   uint256 public splitLandMANAFunds;
 
   //Address of MANA token
-  MANAToken manaToken;
+  IERC20 manaToken;
+
+  // Land marketplace
+  Marketplace marketplace;
 
   //Land registry address
   address landRegistry;
@@ -78,6 +84,9 @@ contract IBank {
 
   //Some people want to let us invest for them but only want a fraction of LAND
   mapping(address => mapping(bytes32 => uint256)) splitBalances;
+
+  //Indices list for splitBalances
+  address[] splitBalancesIndices;
 
   //Others want to let us invest for them and target whole plots of LAND
   mapping(address => mapping(bytes32 => uint256)) wholeBalances;
@@ -102,7 +111,12 @@ contract IBank {
 
   enum INVESTMENT_TYPE {WHOLE, SPLIT}
 
-  function getDepositedLandSplitAddress(
+  function getSplitInvestorsData() public view returns (
+    address[] memory investorsAddress,
+    uint256[] memory amountInvested
+  );
+
+  function getLandTokenSplitAddress(
     uint256 landID
   ) public view returns (address);
 
@@ -172,7 +186,6 @@ contract IBank {
   * where we can buy LAND directly
   **/
   function directBuyLand(
-    address marketplace,
     uint8 investmentType,
     uint256 landId,
     address[] calldata investors,

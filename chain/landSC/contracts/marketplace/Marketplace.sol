@@ -393,7 +393,7 @@ contract Marketplace is Migratable, Ownable, Pausable, MarketplaceStorage {
     );
 
     // Transfer asset owner
-    nftRegistry.safeTransferFrom(
+    nftRegistry.transferFrom( // TODO safeTransferFrom changed
       seller,
       msg.sender,
       assetId

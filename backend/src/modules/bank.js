@@ -57,8 +57,8 @@ class Bank {
 
         const amountNeeded = Decimal(price).sub(investorsBalance);
         investorsBalance = investorsBalance.add(amountNeeded);
-        selectedInvestorsData.push(Object.assign({}, investorData, { balance: amountNeeded.toFixed(18) }) );
-        investorData.balance = Decimal(investorData.balance).sub(amountNeeded).toFixed(18);
+        selectedInvestorsData.push(Object.assign({}, investorData, { balance: amountNeeded.toString() }) );
+        investorData.balance = Decimal(investorData.balance).sub(amountNeeded).toString();
 
         break;
 
@@ -118,7 +118,8 @@ class Bank {
     assert(this.initilized, 'not_initialized');
 
     const bestLands = await Bank._findBestBidForLands();
-    let investorsData = await this.bankContract.getInvestorsData(); // TODO create method to fetch investorsData from Contract
+    const splitInvestorsData = await this.bankContract.getSplitInvestorsData();
+    let investorsData = splitInvestorsData[0].map( (address, i) => ({ address, balance: splitInvestorsData[1][i].toString() }) ).filter(investorData => investorData.balance !== '0');
 
     const totalFunds = investorsData.reduce( (acc, investorData) => acc.add(investorData.balance), Decimal(0) );
     let remainFunds = totalFunds;
@@ -161,8 +162,7 @@ class Bank {
     assert(this.initilized, 'not_initialized');
 
     const tx = await this.bankContract.directBuyLand(
-      Config.contractsAddress[Config.network].addressDecentralandMarketplace,
-      investmentType === 'split' ? 0 : 1,
+      investmentType === 'split' ? 1 : 0,
       landId,
       investorsData.map(investorData => investorData.address),
       investorsData.map(investorData => investorData.balance)

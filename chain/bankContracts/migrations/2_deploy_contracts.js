@@ -10,10 +10,11 @@ const maxLandSplits = 10000;
 const maxBidDuration = 60 * 60 * 24 * 180; //180 days
 const noActionCancelAfter = 60 * 60 * 24 * 60; //60 days
 
-const addressDecentralandBid = '0x5581364f1350B82Ed4E25874f3727395BF6Ce490';
-const addressLandToken= '0x26b4AFb60d6C903165150C6F0AA14F8016bE4aec';
-const addressLandRegistry= '0x26b4AFb60d6C903165150C6F0AA14F8016bE4aec';
-const addressManaToken = '0x5b1869D9A4C187F2EAa108f3062412ecf0526b24';
+const addressManaToken = '0xCfEB869F69431e42cdB54A4F4f105C19C080A601';
+const addressMarketplace = '0x9e90054F4B6730cffAf1E6f6ea10e1bF9dD26dbb';
+const addressLandToken = '0xA57B8a5584442B467b4689F1144D269d096A3daF';
+const addressLandProxy = '0xA57B8a5584442B467b4689F1144D269d096A3daF';
+const addressDecentralandBid = '0x0000000000000000000000000000000000000000';
 
 module.exports = async function (deployer, network, accounts) {
 
@@ -26,9 +27,10 @@ module.exports = async function (deployer, network, accounts) {
       maxBidDuration,
       noActionCancelAfter,
       addressManaToken,
-      addressDecentralandBid,
+      addressMarketplace,
       addressLandToken,
-      addressLandRegistry
+      addressLandProxy,
+      addressDecentralandBid,
     ];
 
     await deployer.deploy(Bank, ...params, { from: accounts[0] });

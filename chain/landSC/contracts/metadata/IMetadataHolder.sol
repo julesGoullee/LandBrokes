@@ -1,6 +1,6 @@
 pragma solidity ^0.4.22;
 
-import "../../node_modules/erc821/contracts/ERC165.sol";
+import "erc821/contracts/ERC165.sol";
 
 
 contract IMetadataHolder is ERC165 {

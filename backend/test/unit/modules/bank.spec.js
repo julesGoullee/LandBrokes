@@ -1,12 +1,11 @@
 const path = require('path');
 const Ethers = require('ethers');
-const Decimal = require('decimal.js');
 
 const Config = require(path.join(srcDir, '../config') );
 const Utils = require(path.join(srcDir, '/modules/utils') );
 const Bank = require(path.join(srcDir, '/modules/bank') );
 
-describe('Bank', () => {
+describe.only('Bank', () => {
 
   beforeEach( () => {
 
@@ -131,9 +130,9 @@ describe('Bank', () => {
       const { selectedInvestorsData, investorsDataUpdated } = Bank._selectInvestors(investorsData, price);
       expect(selectedInvestorsData.length).to.be.eq(2);
       expect(selectedInvestorsData[0].address).to.be.eq('0x0000000000000000000000000000000000000000000000000000000000000001');
-      expect(Decimal(selectedInvestorsData[0].balance).toFixed(18) ).to.be.eq(Decimal(1).toFixed(18) );
+      expect(selectedInvestorsData[0].balance.toString() ).to.be.eq('1');
       expect(selectedInvestorsData[1].address).to.be.eq('0x0000000000000000000000000000000000000000000000000000000000000002');
-      expect(Decimal(selectedInvestorsData[1].balance).toFixed(18) ).to.be.eq(Decimal(2).toFixed(18) );
+      expect(selectedInvestorsData[1].balance.toString() ).to.be.eq('2');
       expect(investorsDataUpdated).to.be.deep.eq([ investorsData[2] ]);
 
     });
@@ -176,23 +175,23 @@ describe('Bank', () => {
           balance: '3'
         },
       ];
-      const price = '2.5';
+      const price = '2';
       const { selectedInvestorsData, investorsDataUpdated } = Bank._selectInvestors(investorsData, price);
       expect(selectedInvestorsData.length).to.be.eq(2);
-      expect(selectedInvestorsData[0].address).to.be.eq('0x0000000000000000000000000000000000000000000000000000000000000001');
-      expect(Decimal(selectedInvestorsData[0].balance).toFixed(18) ).to.be.eq(Decimal(1).toFixed(18) );
-      expect(selectedInvestorsData[1].address).to.be.eq('0x0000000000000000000000000000000000000000000000000000000000000002');
-      expect(Decimal(selectedInvestorsData[1].balance).toFixed(18) ).to.be.eq(Decimal(1.5).toFixed(18) );
-      expect(investorsDataUpdated).to.be.deep.eq([
+      expect(selectedInvestorsData[0].address.toString() ).to.be.eq('0x0000000000000000000000000000000000000000000000000000000000000001');
+      expect(selectedInvestorsData[0].balance.toString() ).to.be.eq('1');
+      expect(selectedInvestorsData[1].address.toString() ).to.be.eq('0x0000000000000000000000000000000000000000000000000000000000000002');
+      expect(selectedInvestorsData[1].balance.toString() ).to.be.eq('1');
+      expect(JSON.stringify(investorsDataUpdated)).to.be.eq(JSON.stringify([
         {
           address: '0x0000000000000000000000000000000000000000000000000000000000000002',
-          balance: Decimal(0.5).toFixed(18)
+          balance: '1'
         },
         {
           address: '0x0000000000000000000000000000000000000000000000000000000000000003',
           balance: '3'
         }
-      ]);
+      ]) );
 
 
     });
@@ -208,7 +207,7 @@ describe('Bank', () => {
       this.bank.wallet = this.sandbox.stub();
       this.bank.bankContract = {
         directBuyLand: this.sandbox.stub(),
-        getInvestorsData: this.sandbox.stub()
+        getSplitInvestorsData: this.sandbox.stub()
       };
       this.bank.initilized = true;
 
@@ -236,8 +235,7 @@ describe('Bank', () => {
 
         expect(this.bank.bankContract.directBuyLand.calledOnce).to.be.true;
         expect(this.bank.bankContract.directBuyLand.calledWith(
-          Config.contractsAddress[Config.network].addressDecentralandMarketplace,
-          0,
+          1,
           'landId',
           [investorsData[0].address, investorsData[1].address],
           [investorsData[0].balance, investorsData[1].balance])
@@ -262,8 +260,7 @@ describe('Bank', () => {
 
         expect(this.bank.bankContract.directBuyLand.calledOnce).to.be.true;
         expect(this.bank.bankContract.directBuyLand.calledWith(
-          Config.contractsAddress[Config.network].addressDecentralandMarketplace,
-          1,
+          0,
           'landId',
           [investorsData[0].address],
           [investorsData[0].balance])
@@ -287,13 +284,13 @@ describe('Bank', () => {
           },
           {
             address: '0x0000000000000000000000000000000000000000000000000000000000000002',
-            balance: '1.5'
+            balance: '3'
           },
         ];
 
         const land = {
           id: 'land_1',
-          price: '1.5'
+          price: '2'
         };
 
         const stubBuyLand = this.sandbox.stub(this.bank, 'directBuyLand');
@@ -306,7 +303,7 @@ describe('Bank', () => {
           },
           {
             address: '0x0000000000000000000000000000000000000000000000000000000000000002',
-            balance: Decimal('0.5').toFixed(18)
+            balance: '1'
           }
         ];
 
@@ -364,36 +361,30 @@ describe('Bank', () => {
         const stubBestLands = [
           {
             id: 'land_1',
-            price: '1.5',
-          },
-          {
-            id: 'land_2',
             price: '2',
           },
           {
-            id: 'land_3',
+            id: 'land_2',
             price: '3',
+          },
+          {
+            id: 'land_3',
+            price: '4',
           },
         ];
 
         const stubFindBestBidForLands = this.sandbox.stub(Bank, '_findBestBidForLands').resolves(stubBestLands);
-        this.bank.bankContract.getInvestorsData.resolves([
-          {
-            address: '0x0000000000000000000000000000000000000000000000000000000000000001',
-            balance: '1'
-          },
-          {
-            address: '0x0000000000000000000000000000000000000000000000000000000000000002',
-            balance: '1.5'
-          },
-          {
-            address: '0x0000000000000000000000000000000000000000000000000000000000000003',
-            balance: '1.5'
-          },
-          {
-            address: '0x0000000000000000000000000000000000000000000000000000000000000004',
-            balance: '0.5'
-          }
+        this.bank.bankContract.getSplitInvestorsData.resolves([
+          [
+            '0x0000000000000000000000000000000000000000000000000000000000000001',
+            '0x0000000000000000000000000000000000000000000000000000000000000002',
+            '0x0000000000000000000000000000000000000000000000000000000000000003',
+          ],
+          [
+            '1',
+            '2',
+            '3'
+          ]
         ]);
         const stubBuyLand = this.sandbox.stub(this.bank, 'directBuyLand');
 
@@ -409,17 +400,17 @@ describe('Bank', () => {
           },
           {
             address: '0x0000000000000000000000000000000000000000000000000000000000000002',
-            balance: Decimal(0.5).toFixed(18)
+            balance: '1'
           }
         ] ]);
         expect(stubBuyLand.args[1]).to.be.deep.eq(['land_2', [
           {
             address: '0x0000000000000000000000000000000000000000000000000000000000000002',
-            balance: Decimal(1).toFixed(18)
+            balance: '1'
           },
           {
             address: '0x0000000000000000000000000000000000000000000000000000000000000003',
-            balance: Decimal(1).toFixed(18)
+            balance: '2'
           }
         ] ]);
 
@@ -433,36 +424,32 @@ describe('Bank', () => {
         const stubBestLands = [
           {
             id: 'land_1',
-            price: '1.5',
+            price: '15',
           },
           {
             id: 'land_2',
-            price: '2',
+            price: '20',
           },
           {
             id: 'land_3',
-            price: '2',
+            price: '20',
           },
         ];
 
         const stubFindBestBidForLands = this.sandbox.stub(Bank, '_findBestBidForLands').resolves(stubBestLands);
-        this.bank.bankContract.getInvestorsData.resolves([
-          {
-            address: '0x0000000000000000000000000000000000000000000000000000000000000001',
-            balance: '1'
-          },
-          {
-            address: '0x0000000000000000000000000000000000000000000000000000000000000002',
-            balance: '1.5'
-          },
-          {
-            address: '0x0000000000000000000000000000000000000000000000000000000000000003',
-            balance: '1.5'
-          },
-          {
-            address: '0x0000000000000000000000000000000000000000000000000000000000000004',
-            balance: '0.5'
-          }
+        this.bank.bankContract.getSplitInvestorsData.resolves([
+          [
+            '0x0000000000000000000000000000000000000000000000000000000000000001',
+            '0x0000000000000000000000000000000000000000000000000000000000000002',
+            '0x0000000000000000000000000000000000000000000000000000000000000003',
+            '0x0000000000000000000000000000000000000000000000000000000000000004',
+          ],
+          [
+            '10',
+            '15',
+            '15',
+            '5',
+          ]
         ]);
         const stubBuyLand = this.sandbox.stub(this.bank, 'directBuyLand');
         stubBuyLand.onSecondCall().rejects('fake-error');
@@ -475,40 +462,40 @@ describe('Bank', () => {
         expect(spyLoggerError.args[0][0]).to.be.eq('Check bid land error');
         expect(spyLoggerError.args[0][1].service).to.be.eq('bank');
         expect(spyLoggerError.args[0][1].landId).to.be.eq('land_2');
-        expect(spyLoggerError.args[0][1].price).to.be.eq('2');
-        expect(spyLoggerError.args[0][1].remainFunds.toString() ).to.be.eq('3');
-        expect(spyLoggerError.args[0][1].totalFunds.toString() ).to.be.eq('4.5');
+        expect(spyLoggerError.args[0][1].price).to.be.eq('20');
+        expect(spyLoggerError.args[0][1].remainFunds.toString() ).to.be.eq('30');
+        expect(spyLoggerError.args[0][1].totalFunds.toString() ).to.be.eq('45');
         expect(spyLoggerError.args[0][1].error).to.exist;
 
         expect(stubBuyLand.callCount).to.be.eq(3);
         expect(stubBuyLand.args[0]).to.be.deep.eq(['land_1', [
           {
             address: '0x0000000000000000000000000000000000000000000000000000000000000001',
-            balance: '1'
+            balance: '10'
           },
           {
             address: '0x0000000000000000000000000000000000000000000000000000000000000002',
-            balance: Decimal(0.5).toFixed(18)
+            balance: '5'
           }
         ] ]);
         expect(stubBuyLand.args[1]).to.be.deep.eq(['land_2', [
           {
             address: '0x0000000000000000000000000000000000000000000000000000000000000002',
-            balance: Decimal(1).toFixed(18)
+            balance: '10'
           },
           {
             address: '0x0000000000000000000000000000000000000000000000000000000000000003',
-            balance: Decimal(1).toFixed(18)
+            balance: '10'
           }
         ] ]);
         expect(stubBuyLand.args[2]).to.be.deep.eq(['land_3', [
           {
             address: '0x0000000000000000000000000000000000000000000000000000000000000002',
-            balance: Decimal(1).toFixed(18)
+            balance: '10'
           },
           {
             address: '0x0000000000000000000000000000000000000000000000000000000000000003',
-            balance: Decimal(1).toFixed(18)
+            balance: '10'
           }
         ] ]);
 

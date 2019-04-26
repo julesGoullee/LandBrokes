@@ -1,6 +1,6 @@
 pragma solidity 0.5.7;
 
-import "../../node_modules/openzeppelin-solidity/contracts/token/ERC20/ERC20Mintable.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20Mintable.sol";
 
 contract ISplitLand is ERC20Mintable {
 

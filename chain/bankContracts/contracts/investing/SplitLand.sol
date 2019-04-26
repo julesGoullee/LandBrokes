@@ -1,7 +1,7 @@
 pragma solidity 0.5.7;
 
-import "./.././interfaces/ISplitLand.sol";
-import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "../interfaces/ISplitLand.sol";
 
 contract SplitLand is ISplitLand {
 
