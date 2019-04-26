@@ -119,7 +119,7 @@ class Bank {
 
     const bestLands = await Bank._findBestBidForLands();
     const splitInvestorsData = await this.bankContract.getSplitInvestorsData();
-    let investorsData = splitInvestorsData[0].map( (address, i) => ({ address, balance: splitInvestorsData[1][i].toString() }) ).filter(investorData => investorData.balance !== '0');
+    let investorsData = splitInvestorsData[0].map( (address, i) => ({ address, balance: splitInvestorsData[1][i].toString() }) );
 
     const totalFunds = investorsData.reduce( (acc, investorData) => acc.add(investorData.balance), Decimal(0) );
     let remainFunds = totalFunds;

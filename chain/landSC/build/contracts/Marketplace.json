@@ -73634,10 +73634,299 @@
       "links": {},
       "address": "0x9e90054F4B6730cffAf1E6f6ea10e1bF9dD26dbb",
       "transactionHash": "0x731161d53ef0477dbcfce8f722257db131b2d924a25679f0814562d36f2446a3"
+    },
+    "1556303282682": {
+      "events": {
+        "0x84c66c3f7ba4b390e20e8e8233e2a516f3ce34a72749e4f12bd010dfba238039": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "id",
+              "type": "bytes32"
+            },
+            {
+              "indexed": true,
+              "name": "assetId",
+              "type": "uint256"
+            },
+            {
+              "indexed": true,
+              "name": "seller",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "nftAddress",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "priceInWei",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "expiresAt",
+              "type": "uint256"
+            }
+          ],
+          "name": "OrderCreated",
+          "type": "event",
+          "signature": "0x84c66c3f7ba4b390e20e8e8233e2a516f3ce34a72749e4f12bd010dfba238039"
+        },
+        "0x695ec315e8a642a74d450a4505eeea53df699b47a7378c7d752e97d5b16eb9bb": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "id",
+              "type": "bytes32"
+            },
+            {
+              "indexed": true,
+              "name": "assetId",
+              "type": "uint256"
+            },
+            {
+              "indexed": true,
+              "name": "seller",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "nftAddress",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "totalPrice",
+              "type": "uint256"
+            },
+            {
+              "indexed": true,
+              "name": "buyer",
+              "type": "address"
+            }
+          ],
+          "name": "OrderSuccessful",
+          "type": "event",
+          "signature": "0x695ec315e8a642a74d450a4505eeea53df699b47a7378c7d752e97d5b16eb9bb"
+        },
+        "0x0325426328de5b91ae4ad8462ad4076de4bcaf4551e81556185cacde5a425c6b": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "id",
+              "type": "bytes32"
+            },
+            {
+              "indexed": true,
+              "name": "assetId",
+              "type": "uint256"
+            },
+            {
+              "indexed": true,
+              "name": "seller",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "nftAddress",
+              "type": "address"
+            }
+          ],
+          "name": "OrderCancelled",
+          "type": "event",
+          "signature": "0x0325426328de5b91ae4ad8462ad4076de4bcaf4551e81556185cacde5a425c6b"
+        },
+        "0xe7fa8737293f41b5dfa0d5c3e552860a06275bed7015581b083c7be7003308ba": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "publicationFee",
+              "type": "uint256"
+            }
+          ],
+          "name": "ChangedPublicationFee",
+          "type": "event",
+          "signature": "0xe7fa8737293f41b5dfa0d5c3e552860a06275bed7015581b083c7be7003308ba"
+        },
+        "0xfa406a120a9e7f2b332bfb7a43d3bf1c3f079262202907a6b69c94b2821a02c6": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "ownerCutPerMillion",
+              "type": "uint256"
+            }
+          ],
+          "name": "ChangedOwnerCutPerMillion",
+          "type": "event",
+          "signature": "0xfa406a120a9e7f2b332bfb7a43d3bf1c3f079262202907a6b69c94b2821a02c6"
+        },
+        "0x6e65d1b616d558dd96db7a58e31a954d28d47d57d568e7d7fc7819803878928f": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "legacyNFTAddress",
+              "type": "address"
+            }
+          ],
+          "name": "ChangeLegacyNFTAddress",
+          "type": "event",
+          "signature": "0x6e65d1b616d558dd96db7a58e31a954d28d47d57d568e7d7fc7819803878928f"
+        },
+        "0x9493ae82b9872af74473effb9d302efba34e0df360a99cc5e577cd3f28e3cab2": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "id",
+              "type": "bytes32"
+            },
+            {
+              "indexed": true,
+              "name": "assetId",
+              "type": "uint256"
+            },
+            {
+              "indexed": true,
+              "name": "seller",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "priceInWei",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "expiresAt",
+              "type": "uint256"
+            }
+          ],
+          "name": "AuctionCreated",
+          "type": "event",
+          "signature": "0x9493ae82b9872af74473effb9d302efba34e0df360a99cc5e577cd3f28e3cab2"
+        },
+        "0xedcc7e1c269bc295dc24e74dc46b129c8449e6b0544af73b57c4201b78d119db": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "id",
+              "type": "bytes32"
+            },
+            {
+              "indexed": true,
+              "name": "assetId",
+              "type": "uint256"
+            },
+            {
+              "indexed": true,
+              "name": "seller",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "totalPrice",
+              "type": "uint256"
+            },
+            {
+              "indexed": true,
+              "name": "winner",
+              "type": "address"
+            }
+          ],
+          "name": "AuctionSuccessful",
+          "type": "event",
+          "signature": "0xedcc7e1c269bc295dc24e74dc46b129c8449e6b0544af73b57c4201b78d119db"
+        },
+        "0x88bd2ba46f3dc2567144331c35bd4c5ced3d547d8828638a152ddd9591c137a6": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "id",
+              "type": "bytes32"
+            },
+            {
+              "indexed": true,
+              "name": "assetId",
+              "type": "uint256"
+            },
+            {
+              "indexed": true,
+              "name": "seller",
+              "type": "address"
+            }
+          ],
+          "name": "AuctionCancelled",
+          "type": "event",
+          "signature": "0x88bd2ba46f3dc2567144331c35bd4c5ced3d547d8828638a152ddd9591c137a6"
+        },
+        "0x6985a02210a168e66602d3235cb6db0e70f92b3ba4d376a33c0f3d9434bff625": {
+          "anonymous": false,
+          "inputs": [],
+          "name": "Pause",
+          "type": "event",
+          "signature": "0x6985a02210a168e66602d3235cb6db0e70f92b3ba4d376a33c0f3d9434bff625"
+        },
+        "0x7805862f689e2f13df9f062ff482ad3ad112aca9e0847911ed832e158c525b33": {
+          "anonymous": false,
+          "inputs": [],
+          "name": "Unpause",
+          "type": "event",
+          "signature": "0x7805862f689e2f13df9f062ff482ad3ad112aca9e0847911ed832e158c525b33"
+        },
+        "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "previousOwner",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "name": "newOwner",
+              "type": "address"
+            }
+          ],
+          "name": "OwnershipTransferred",
+          "type": "event",
+          "signature": "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0"
+        },
+        "0xdd117a11c22118c9dee4b5a67ce578bc44529dce21ee0ccc439588fbb9fb4ea3": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "contractName",
+              "type": "string"
+            },
+            {
+              "indexed": false,
+              "name": "migrationId",
+              "type": "string"
+            }
+          ],
+          "name": "Migrated",
+          "type": "event",
+          "signature": "0xdd117a11c22118c9dee4b5a67ce578bc44529dce21ee0ccc439588fbb9fb4ea3"
+        }
+      },
+      "links": {},
+      "address": "0x9e90054F4B6730cffAf1E6f6ea10e1bF9dD26dbb",
+      "transactionHash": "0x731161d53ef0477dbcfce8f722257db131b2d924a25679f0814562d36f2446a3"
     }
   },
   "schemaVersion": "3.0.1",
-  "updatedAt": "2019-04-26T18:05:01.418Z",
+  "updatedAt": "2019-04-26T18:28:22.561Z",
   "devdoc": {
     "methods": {
       "auctionByAssetId(uint256)": {
