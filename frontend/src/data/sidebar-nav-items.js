@@ -2,7 +2,7 @@ export default function() {
   return [
     {
       title: "Overview",
-      to: "/blog-overview",
+      to: "/overview",
       htmlBefore: '<i class="material-icons">grid_on</i>',
       htmlAfter: ""
     },
