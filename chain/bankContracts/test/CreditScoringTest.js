@@ -177,6 +177,161 @@ contract('CreditScoring', function (accounts) {
 
   })
 
+  it("should let the owner fill requests", async () => {
+
+    var firstComputationCategories = ["DEPOSIT HISTORY", "BANK SPAM", "MORTGAGE SEEKED"]
+    var firstComputationLevels = [1, 2, 2];
+
+    await credit.computeAndUpdateScore(
+      accounts[4],
+      firstComputationCategories,
+      firstComputationLevels,
+      "SOME_IPFS_PROOF"
+    );
+
+    var manaToOffer = 10 ** 10
+
+    await mana.approve(credit.address, manaToOffer, {from: accounts[4]});
+
+    await credit.requestCreditPoints(
+      accounts[4],
+      60 * 60 * 24 * 9, //9 days
+      30,
+      mana.address,
+      manaToOffer,
+      {from: accounts[4]}
+    );
+
+    await credit.fillRequest(
+      0,
+      {from: accounts[0]}
+    );
+
+    var userCurrentlyBorrowed = await credit.getCurrentlyBorrowed(accounts[4]);
+    var userAllTimeBorrowed = await credit.getAllTimeBorrowed(accounts[4]);
+
+    var requestStatus = await credit.getRequestStatus(0);
+    var requestParties = await credit.getRequestParties(0);
+
+    assert(requestParties[1].toString() == accounts[0], "The owner is not the filler")
+    assert(userCurrentlyBorrowed.toString() == "30", "The user currently has no borrowed points");
+    assert(userAllTimeBorrowed.toString() == "30", "The user never borrowed points");
+    assert(requestStatus.toString() == "0", "The request status is not 0");
+
+  })
+
+  it("should let other addresses apart from the owner to fill requests", async () => {
+
+    var firstComputationCategories = ["DEPOSIT HISTORY", "BANK SPAM", "MORTGAGE SEEKED"]
+    var firstComputationLevels = [1, 2, 2];
+
+    var secondComputationCategories = [
+      "DEPOSIT HISTORY",
+      "INVESTING HISTORY",
+      "BANK SPAM",
+      "MORTGAGE SEEKED",
+      "OUTSTANDING DEBT",
+      "TIMES DEFAULTED"
+    ];
+
+    var secondComputationLevels = [2, 1, 1, 1, 2, 0];
+
+    await credit.computeAndUpdateScore(
+      accounts[4],
+      firstComputationCategories,
+      firstComputationLevels,
+      "SOME_IPFS_PROOF"
+    );
+
+    await credit.computeAndUpdateScore(
+      accounts[5],
+      secondComputationCategories,
+      secondComputationLevels,
+      "SOME_IPFS_PROOF"
+    );
+
+    var manaToOffer = 10 ** 10
+
+    await mana.approve(credit.address, manaToOffer, {from: accounts[4]});
+
+    await credit.requestCreditPoints(
+      accounts[4],
+      60 * 60 * 24 * 9, //9 days
+      30,
+      mana.address,
+      manaToOffer,
+      {from: accounts[4]}
+    );
+
+    await credit.fillRequest(
+      0,
+      {from: accounts[5]}
+    );
+
+    var userCurrentlyBorrowed = await credit.getCurrentlyBorrowed(accounts[4]);
+    var userAllTimeBorrowed = await credit.getAllTimeBorrowed(accounts[4]);
+
+    var requestStatus = await credit.getRequestStatus(0);
+    var requestParties = await credit.getRequestParties(0);
+
+    var allTimeLentLender = await credit.getAllTimeLent(accounts[5]);
+    var currentlyLentLender = await credit.getCurrentlyLent(accounts[5]);
+    var lenderScore = await credit.getPersonalScore(accounts[5])
+
+    assert(lenderScore.toString() == "125", "The lender's personal score is not 125")
+    assert(allTimeLentLender.toString() == "30", "The lender did not lend 30 points in total")
+    assert(currentlyLentLender.toString() == "30", "The lender is not currently lending 30 points")
+    assert(requestParties[1].toString() == accounts[5], "accounts[5] is not the filler")
+    assert(userCurrentlyBorrowed.toString() == "30", "The user currently has no borrowed points");
+    assert(userAllTimeBorrowed.toString() == "30", "The user never borrowed points");
+    assert(requestStatus.toString() == "0", "The request status is not 0");
+
+  })
+
+  it("should let the borrower pay back their debt", async () => {
+
+    var firstComputationCategories = ["DEPOSIT HISTORY", "BANK SPAM", "MORTGAGE SEEKED"]
+    var firstComputationLevels = [1, 2, 2];
+
+    await credit.computeAndUpdateScore(
+      accounts[4],
+      firstComputationCategories,
+      firstComputationLevels,
+      "SOME_IPFS_PROOF"
+    );
+
+    var manaToOffer = 10 ** 10
+
+    await mana.approve(credit.address, manaToOffer, {from: accounts[4]});
+
+    await credit.requestCreditPoints(
+      accounts[4],
+      60 * 60 * 24 * 9, //9 days
+      30,
+      mana.address,
+      manaToOffer,
+      {from: accounts[4]}
+    );
+
+    await mana.approve(credit.address, manaToOffer, {from: accounts[4]});
+
+    await credit.fillRequest(
+      0,
+      {from: accounts[0]}
+    );
+
+    await credit.payBackDebt(
+      0,
+      10**8,
+      {from: accounts[4]}
+    )
+
+    var ownerNewManaAmount = await mana.balanceOf(accounts[0]);
+
+    assert("1000100000000" == ownerNewManaAmount.toString(), "The owner did not get their pay")
+
+  })
+
   async function mintCoins() {
 
     var defaultToMint = 10 ** 12;
