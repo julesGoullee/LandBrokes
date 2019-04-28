@@ -2,7 +2,8 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Navbar, NavbarBrand } from "shards-react";
 
-import { Dispatcher, Constants } from "../../../flux";
+import { connect } from "react-redux";
+import { toggleSidebar } from "../../../redux/actions";
 
 class SidebarMainNavbar extends React.Component {
   constructor(props) {
@@ -12,9 +13,7 @@ class SidebarMainNavbar extends React.Component {
   }
 
   handleToggleSidebar() {
-    Dispatcher.dispatch({
-      actionType: Constants.TOGGLE_SIDEBAR
-    });
+    this.props.toggleSidebar()
   }
 
   render() {
@@ -69,4 +68,4 @@ SidebarMainNavbar.defaultProps = {
   hideLogoText: false
 };
 
-export default SidebarMainNavbar;
+export default connect(null, { toggleSidebar })(SidebarMainNavbar);

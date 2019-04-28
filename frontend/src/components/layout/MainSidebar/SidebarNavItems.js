@@ -2,36 +2,12 @@ import React from "react";
 import { Nav } from "shards-react";
 
 import SidebarNavItem from "./SidebarNavItem";
-import { Store } from "../../../flux";
+import { connect } from "react-redux";
 
 class SidebarNavItems extends React.Component {
-  constructor(props) {
-    super(props)
-
-    this.state = {
-      navItems: Store.getSidebarItems()
-    };
-
-    this.onChange = this.onChange.bind(this);
-  }
-
-  componentWillMount() {
-    Store.addChangeListener(this.onChange);
-  }
-
-  componentWillUnmount() {
-    Store.removeChangeListener(this.onChange);
-  }
-
-  onChange() {
-    this.setState({
-      ...this.state,
-      navItems: Store.getSidebarItems()
-    });
-  }
 
   render() {
-    const { navItems: items } = this.state;
+    const { navItems: items } = this.props;
     return (
       <div className="nav-wrapper">
         <Nav className="nav--no-borders flex-column">
@@ -44,4 +20,10 @@ class SidebarNavItems extends React.Component {
   }
 }
 
-export default SidebarNavItems;
+const mapStateToProps = state => {
+  return {
+    navItems: state.menu.navItems
+  };
+};
+
+export default connect(mapStateToProps)(SidebarNavItems);
