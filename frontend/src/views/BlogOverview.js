@@ -149,7 +149,7 @@ BlogOverview.propTypes = {
 BlogOverview.defaultProps = {
   smallStats: [
     {
-      label: "Total Land",
+      label: "Credit Score",
       value: "2,390",
       percentage: null,
       increase: true,

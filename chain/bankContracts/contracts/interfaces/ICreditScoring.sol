@@ -1,4 +1,5 @@
 pragma solidity 0.5.7;
+pragma experimental ABIEncoderV2;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
@@ -10,18 +11,19 @@ contract ICreditScoring is Ownable {
   event ChangedMaxBorrowedPoints(uint256 _points);
   event UpdatedScore(address _user, int256 _newScore, string ipfsProof);
   event UserRegistered(address _user);
-  event RequestedCreditPoints(address _user, uint256 _lendingDuration, bytes _askData, bytes _offerData);
+  event RequestedCreditPoints(address _user, uint256 _lendingDuration,
+    uint256 pointsToBorrow, address coinOffered, uint256 coinAmountOffered);
   event FilledRequest(address _lender, uint256 requestPosition);
   event CancelledRequest(address borrower, uint256 position);
   event ChangedRequestCoinOffered(uint256 position, address newCoin);
   event ChangedRequestCoinAmountOffered(uint256 position, uint256 coinAmount);
-  event PaidBack(address _caller, uint256 request, uint256 coinAmount);
+  event PaidBack(address _caller, uint256 request, uint256 coinAmount, uint256 totalPaidBack);
   event GotBackCollateral(address caller, uint256 requestPosition);
   event PunishedBorrower(address caller, uint256 requestPosition);
 
   enum BACKING_TYPE {ERC20, ERC721}
 
-  enum REQUEST_STATUS {STARTED, CANCELLED, CREATED}
+  enum REQUEST_STATUS {STARTED, CANCELLED, CREATED, FINISHED}
 
   struct CreditRequest {
 
@@ -68,31 +70,44 @@ contract ICreditScoring is Ownable {
 
     address lender;
 
+    //How many credit points the borrower wants
+    uint256 borrowedPoints;
+
+    //The address of the ERC20 token offered as payment to the lender
+    address coinOffered;
+
+    //How many ERC20 tokens will be paid for the credit points borrowed
+    uint256 coinAmountOffered;
+
+    uint256 paidBack;
+
     /**
     * The encoded ASK params
     * (borrowerBackingType, borrowedPoints, borrowerBackingAmount,
     * borrowerUniqueBackingIds, borrowerBackingLocation)
     **/
-    bytes askData;
+    //bytes askData;
 
     /**
     * The encoded OFFER params
     * (coinOffered, coinAmountOffered)
     **/
-    bytes offerData;
+    //bytes offerData;
 
   }
 
   struct User {
 
     //The personal credit score of a user
-    uint256 personalScore;
+    int256 personalScore;
 
     //How many points this user borrowed since the beginning of their activity
-    uint256 borrowedPoints;
+    uint256 currentlyBorrowedPoints;
 
     //How many points this user lent since the beginning of their activity
     uint256 allTimeLentPoints;
+
+    uint256 allTimeBorrowedPoints;
 
     //How many points this user is lending right now
     uint256 currentlyLentPoints;
@@ -136,6 +151,8 @@ contract ICreditScoring is Ownable {
   mapping(address => bool) whitelistedCoins;
 
   mapping(address => User) users;
+
+  mapping(address => bool) userExists;
 
   CreditRequest[] public creditRequests;
 
@@ -197,9 +214,9 @@ contract ICreditScoring is Ownable {
   ) external;
 
   /**
-  * @dev Get your credit score. The elements array is made out of the level
-         the user is at in each category. For example, if we determine off-chain
-         that the user has the following:
+  * @dev Get your credit score. The first array gives the categories, the second
+         one gives the level where the caller is at for each category.
+         For example, if we determine off-chain that the user has the following:
 
          Deposit history: 6 - 10 weeks
          Investing history length: Below 6 months - 10 points
@@ -208,22 +225,27 @@ contract ICreditScoring is Ownable {
          Outstanding debt: 501 - 10K MANA
          Times defaulted: 0 times
 
-         then the user would need to pass the array:
+         then the user would need to pass the arrays:
 
+         ["DEPOSIT HISTORY", "INVESTING HISTORY LENGTH", "BANK SPAM", "MORTGAGES SEEKED IN THE LAST 6 MONTHS", "OUTSTANDING DEBT", "TIMES DEFAULTED"]
          [2, 1, 0, 1, 2, 0]
 
          The function (for now) simply returns the sum of the points
-         mapped to each level from each category. In this case,
+         mapped to each level from each category minus points lent plus points borrowed. In this case,
 
          30 + 10 + 30 + 30 + 20 + 70 = 190 (credit points)
 
+  * @param _user - The _user for which the score is being computed
+  * @param categories - The array of categories taken into account
   * @param elements - The array of levels for each category as explained above
 
   **/
 
   function computeCreditScore(
+    address _user,
+    string[] calldata categories,
     uint256[] calldata elements)
-    external view returns (uint256);
+    external view returns (int256);
 
   //needs onlyOwner
 
@@ -245,6 +267,7 @@ contract ICreditScoring is Ownable {
 
   function computeAndUpdateScore(
     address user,
+    string[] calldata categories,
     uint256[] calldata elements,
     string calldata ipfsCreditDataProof
   ) external;
@@ -264,15 +287,17 @@ contract ICreditScoring is Ownable {
   * @dev Request credit points. Alternatively the owner can request points on behalf of a user
 
   * @param _lendingDuration - How many seconds this address wants to keep the borrowed points
-  * @param _askData - The encoded ASK parameters (ASK params are detailed in CreditRequest)
-  * @param _offerData - The encoded OFFER parameters (OFFER params are detailed in CreditRequest)
+  * @param pointsToBorrow - How many points _user wants to borrow
+  * @param coinOffered - The ERC20 coin offered as interest payment
+  * @param coinAmountOffered - The amount of ERC20 coins offered
   **/
 
   function requestCreditPoints(
     address _user,
     uint256 _lendingDuration,
-    bytes calldata _askData,
-    bytes calldata _offerData
+    uint256 pointsToBorrow,
+    address coinOffered,
+    uint256 coinAmountOffered
   ) external;
 
   /**
@@ -331,7 +356,7 @@ contract ICreditScoring is Ownable {
          were specified in the request. The caller does not need to pay
          everything at once.
 
-  * @param position - The position of the request in creditRequests
+  * @param position - The position of the request in
   * @param _coinAmount - How many ERC20 tokens are being sent to the lender
   **/
 

@@ -17,8 +17,8 @@ class Tablesbackup extends React.Component {
        this.state = {
         smallStats: [
             {
-              label: "Total Land",
-              value: "2,390",
+              label: "Credit Score",
+              value: "1",
               percentage: null,
               increase: true,
               chartLabels: [null, null, null, null, null, null, null],
@@ -71,7 +71,7 @@ class Tablesbackup extends React.Component {
             </Row>
             <Row noGutters className="page-header py-4">
               <PageTitle sm="4" title="Add New Post" subtitle="Blog Posts" className="text-sm-left" />
-             
+
                    <Col className="mb-4">
               <div
                 className="bg-success text-white text-center rounded p-3"
@@ -80,14 +80,14 @@ class Tablesbackup extends React.Component {
               </div>
             </Col>
             </Row>
-          
-        
+
+
             {/* Default Light Table */}
             <Row>
               <Col>
                 <Card small className="mb-4">
                   <CardHeader className="border-bottom">
-                    <h6 className="m-0">Active Users</h6>
+                    <h6 className="m-0">Proposals</h6>
                   </CardHeader>
                   <CardBody className="p-0 pb-3">
                     <table className="table mb-0">
@@ -169,8 +169,8 @@ Tablesbackup.propTypes = {
 Tablesbackup.defaultProps = {
   smallStats: [
     {
-      label: "Total Land",
-      value: "2,390",
+      label: "Credit Score",
+      value: "1",
       percentage: null,
       increase: true,
       chartLabels: [null, null, null, null, null, null, null],
