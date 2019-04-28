@@ -180,9 +180,9 @@
   "sourceMap": "",
   "deployedSourceMap": "",
   "source": "pragma solidity 0.5.7;\n\ncontract IVoteCredit {\n\n  event Proposed(uint8 _type,\n  string paramName,\n  uint256 lvl,\n  int256 points,\n  string ipfsDetails,\n  address creator);\n\n  event Voted(\n    uint256 nonce,\n    bool castedVote\n  );\n\n  event CountedVotes(\n    uint256 nonce,\n    bool result\n  );\n\n  event Cancelled(uint256 nonce);\n\n  uint256 proposalNonce;\n\n  uint256 DEFAULT_PROPOSAL_DURATION;\n\n  mapping(uint256 => Proposal) proposals;\n\n  mapping(uint256 => Ballot) votes;\n\n  mapping(address => mapping(uint256 => bool)) alreadyVoted;\n\n  enum PROPOSAL_TYPES {MODIFY, CREATE, REMOVE}\n\n  enum PROPOSAL_STAGE {ONGOING, CANCELLED, FINISHED}\n\n  struct Ballot {\n\n    uint256 yes;\n    uint256 no;\n\n  }\n\n  struct Proposal {\n\n    uint256 creationTime;\n\n    uint8 stage;\n\n    uint8 proposalType;\n\n    string paramName;\n\n    uint256 paramLevel;\n\n    int256 paramPoints;\n\n    string ipfsDetails;\n\n    address creator;\n\n    bool endResult;\n\n  }\n\n  function proposeParamVote(\n    uint8 _type,\n    string calldata paramName,\n    uint256 lvl,\n    int256 points,\n    string calldata ipfsDetails\n  ) external;\n\n  function proposeNewFormula(\n    string calldata formulaOnIpfs\n  ) external;\n\n  function cancelProposal(\n    uint256 nonce\n  ) external;\n\n  function vote(\n    uint256 nonce,\n    bool castedVote\n  ) external;\n\n  function countVotes(uint256 nonce) external;\n\n}\n",
-  "sourcePath": "/Users/jules/WebstormProjects/RobInTheHood/chain/bankContracts/contracts/interfaces/IVoteCredit.sol",
+  "sourcePath": "/home/stefan/Work/LandBrokes/chain/bankContracts/contracts/interfaces/IVoteCredit.sol",
   "ast": {
-    "absolutePath": "/Users/jules/WebstormProjects/RobInTheHood/chain/bankContracts/contracts/interfaces/IVoteCredit.sol",
+    "absolutePath": "/home/stefan/Work/LandBrokes/chain/bankContracts/contracts/interfaces/IVoteCredit.sol",
     "exportedSymbols": {
       "IVoteCredit": [
         2820
@@ -1553,7 +1553,7 @@
     "src": "0:1354:7"
   },
   "legacyAST": {
-    "absolutePath": "/Users/jules/WebstormProjects/RobInTheHood/chain/bankContracts/contracts/interfaces/IVoteCredit.sol",
+    "absolutePath": "/home/stefan/Work/LandBrokes/chain/bankContracts/contracts/interfaces/IVoteCredit.sol",
     "exportedSymbols": {
       "IVoteCredit": [
         2820
@@ -2929,7 +2929,7 @@
   },
   "networks": {},
   "schemaVersion": "3.0.1",
-  "updatedAt": "2019-04-28T14:25:30.712Z",
+  "updatedAt": "2019-04-28T16:00:49.240Z",
   "devdoc": {
     "methods": {}
   },
