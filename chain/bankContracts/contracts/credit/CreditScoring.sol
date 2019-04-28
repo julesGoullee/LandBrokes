@@ -53,8 +53,6 @@ contract CreditScoring is ICreditScoring {
     int256 score
   ) external onlyOwner {
 
-    require(score != 0, "The score must be different from 0");
-
     scorecard[elementName][elementOption] = score;
 
     emit SetCardOption(elementName, elementOption, score);
@@ -90,23 +88,20 @@ contract CreditScoring is ICreditScoring {
   function computeCreditScore(
     address _user,
     string[] calldata categories,
-    uint256[] calldata elements)
+    uint256[] calldata levels)
     external view returns (int256) {
 
-    if (categories.length != elements.length ||
+    if (categories.length != levels.length ||
         categories.length == 0 ||
         userExists[_user] == false) return 0;
 
     int256 score = 0;
 
-    for (uint i = 0; i < elements.length; i++) {
+    for (uint i = 0; i < levels.length; i++) {
 
-      score += scorecard[categories[i]][elements[i]];
+      score += scorecard[categories[i]][levels[i]];
 
     }
-
-    score -= int256(users[_user].currentlyLentPoints);
-    score += int256(users[_user].currentlyBorrowedPoints);
 
     return score;
 
@@ -472,7 +467,7 @@ contract CreditScoring is ICreditScoring {
 
   }
 
-  function getRequestDuration(uint256 position) public view returns (uint256) {
+  function getRequestLendingDuration(uint256 position) public view returns (uint256) {
 
     return creditRequests[position].lendingDuration;
 
@@ -482,6 +477,30 @@ contract CreditScoring is ICreditScoring {
 
     return (creditRequests[position].borrower,
             creditRequests[position].lender);
+
+  }
+
+  function getRequestPaidBack(uint256 position) public view returns (uint256) {
+
+    return creditRequests[position].paidBack;
+
+  }
+
+  function getRequestBorrowedPoints(uint256 position) public view returns (uint256) {
+
+    return creditRequests[position].borrowedPoints;
+
+  }
+
+  function getRequestCoinOffered(uint256 position) public view returns (address) {
+
+    return creditRequests[position].coinOffered;
+
+  }
+
+  function getRequestCoinAmountOffered(uint256 position) public view returns (uint256) {
+
+    return creditRequests[position].coinAmountOffered;
 
   }
 
