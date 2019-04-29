@@ -43,9 +43,7 @@ class Overview extends React.Component {
 
         <Row className="mb-2">
           <Col lg="12">
-      <span style={{ fontSize: "16px" }} className="d-block mb-2 text-muted">
-        <strong>Land Owned</strong>
-      </span>
+
           </Col>
 
           <Col className="mb-4">
@@ -102,35 +100,35 @@ class Overview extends React.Component {
                   <tbody>
                   <tr>
                     <td>1</td>
-                    <td>Ali</td>
-                    <td>Kerry</td>
-                    <td>Russian Federation</td>
-                    <td>Gdańsk</td>
-                    <td>107-0339</td>
+                    <td>104, 34</td>
+                    <td>Dragon City</td>
+                    <td>4</td>
+                    <td>43</td>
+                    <td>488</td>
                   </tr>
                   <tr>
                     <td>2</td>
-                    <td>Clark</td>
-                    <td>Angela</td>
-                    <td>Estonia</td>
-                    <td>Borghetto di Vara</td>
-                    <td>1-660-850-1647</td>
+                    <td>106, 39</td>
+                    <td>Dragon City</td>
+                    <td>5</td>
+                    <td>13</td>
+                    <td>300</td>
                   </tr>
                   <tr>
                     <td>3</td>
-                    <td>Jerry</td>
-                    <td>Nathan</td>
-                    <td>Cyprus</td>
-                    <td>Braunau am Inn</td>
-                    <td>214-4225</td>
+                    <td>58, 79</td>
+                    <td>Aetheria</td>
+                    <td>3</td>
+                    <td>4</td>
+                    <td>179</td>
                   </tr>
                   <tr>
                     <td>4</td>
-                    <td>Colt</td>
-                    <td>Angela</td>
-                    <td>Liberia</td>
-                    <td>Bad Hersfeld</td>
-                    <td>1-848-473-7416</td>
+                    <td>59, 67</td>
+                    <td>Aetheria</td>
+                    <td>7</td>
+                    <td>19</td>
+                    <td>603</td>
                   </tr>
                   </tbody>
                 </table>
@@ -161,8 +159,8 @@ Overview.propTypes = {
 Overview.defaultProps = {
   smallStats: [
     {
-      label: "Credit Score",
-      value: "2,390",
+      label: "Total Land",
+      value: "5",
       percentage: null,
       increase: true,
       chartLabels: [null, null, null, null, null, null, null],
@@ -198,7 +196,7 @@ Overview.defaultProps = {
     },
     {
       label: "Currently Invested",
-      value: "8,147",
+      value: "1,570",
       percentage: null,
       increase: false,
       decrease: true,
