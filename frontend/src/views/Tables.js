@@ -92,35 +92,35 @@ const Tables = ( {smallStats} ) => (
               <tbody>
                 <tr>
                   <td>1</td>
-                  <td>Ali</td>
-                  <td>Kerry</td>
-                  <td>Russian Federation</td>
-                  <td>Gdańsk</td>
-                  <td>107-0339</td>
+                  <td>Param</td>
+                  <td>Investment History</td>
+                  <td>0</td>
+                  <td>IPFS LINK</td>
+                  <td>0x5581...e490</td>
                 </tr>
                 <tr>
                   <td>2</td>
-                  <td>Clark</td>
-                  <td>Angela</td>
-                  <td>Estonia</td>
-                  <td>Borghetto di Vara</td>
-                  <td>1-660-850-1647</td>
+                  <td>Formula</td>
+                  <td>-</td>
+                  <td>-</td>
+                  <td>IPFS LINK</td>
+                  <td>0x5581...e490</td>
                 </tr>
                 <tr>
                   <td>3</td>
-                  <td>Jerry</td>
-                  <td>Nathan</td>
-                  <td>Cyprus</td>
-                  <td>Braunau am Inn</td>
-                  <td>214-4225</td>
+                  <td>Param</td>
+                  <td>Outstanding Debt</td>
+                  <td>2</td>
+                  <td>IPFS LINK</td>
+                  <td>0x5581...e490</td>
                 </tr>
                 <tr>
                   <td>4</td>
-                  <td>Colt</td>
-                  <td>Angela</td>
-                  <td>Liberia</td>
-                  <td>Bad Hersfeld</td>
-                  <td>1-848-473-7416</td>
+                  <td>Param</td>
+                  <td>Times Defaulted</td>
+                  <td>1</td>
+                  <td>IPFS LINK</td>
+                  <td>0x5581...e490</td>
                 </tr>
               </tbody>
             </table>

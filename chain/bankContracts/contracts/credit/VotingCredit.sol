@@ -175,4 +175,16 @@ contract VotingCredit is IVoteCredit {
 
   }
 
+  function addressAlreadyVoted(uint256 position, address who) public view returns (bool) {
+
+    return alreadyVoted[who][position];
+
+  }
+
+  function currentVotesOnProposal(uint256 position) public view returns (uint256, uint256) {
+
+    return (votes[position].yes, votes[position].no);
+
+  }
+
 }
