@@ -2,8 +2,9 @@ import React from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Container, Row, Col, Card, CardHeader, CardBody } from "shards-react";
+import * as Ethers from 'ethers';
 
-import { allowMana } from "../redux/actions";
+import { allowMana, invest } from "../redux/actions";
 
 import PageTitle from "./../components/common/PageTitle";
 import SmallStats from "./../components/common/SmallStats";
@@ -19,7 +20,8 @@ class Overview extends React.Component {
       balanceMana,
       balanceInvested,
       allowanceMana,
-      allowMana
+      allowMana,
+      invest
     } = this.props;
 
     return (
@@ -48,7 +50,7 @@ class Overview extends React.Component {
         </Row>
 
         <Row noGutters className="mb-2">
-          <strong>Address: { address } Balance mana: { balanceMana } Balance Invested: { balanceInvested } allowanceMana: { allowanceMana !== '0' ? 'yes' : 'no' } </strong>
+          <strong>Address: { address } Balance mana: { Ethers.utils.formatEther(balanceMana) } Balance Invested: { Ethers.utils.formatEther(balanceInvested) } allowanceMana: { Ethers.utils.formatEther(allowanceMana) } </strong>
         </Row>
 
         <Row className="mb-2">
@@ -77,13 +79,15 @@ class Overview extends React.Component {
                 Allow bank transfer mana
               </button>
             }
-          </Col>
-          <Col className="mb-4">
-            <button
-              className="bg-success text-white text-center rounded p-3"
-              style={{ boxShadow: "inset 0 0 5px rgba(0,0,0,.2)" }}>
-              Invest
-            </button>
+            {
+              allowanceMana !== '0' &&
+              <button
+                onClick={invest}
+                className="bg-success text-white text-center rounded p-3"
+                style={{ boxShadow: "inset 0 0 5px rgba(0,0,0,.2)" }}>
+                Invest
+              </button>
+            }
           </Col>
         </Row>
         <Row>
@@ -282,4 +286,7 @@ const mapStateToProps = state => {
   };
 };
 
-export default connect(mapStateToProps, { allowMana })(Overview);
+export default connect(mapStateToProps, {
+  allowMana,
+  invest
+})(Overview);

@@ -125,8 +125,7 @@ contract IBank is IERC721Receiver {
   ) public view returns (uint256);
 
   function getSplitBalance(
-    address who,
-    bytes32 hashedCoinTicker
+    address who
   ) public view returns (uint256);
 
   function getWholeBalance(

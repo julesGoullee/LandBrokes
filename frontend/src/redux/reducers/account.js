@@ -1,4 +1,4 @@
-import { FETCH_ACCOUNT, UPDATE_ALLOWANCE } from "../actionTypes";
+import { UPDATE_BALANCES, FETCH_ACCOUNT, UPDATE_ALLOWANCE } from "../actionTypes";
 
 const initialState = {
   address: '',
@@ -9,19 +9,26 @@ const initialState = {
 
 export default function(state = initialState, action) {
   switch (action.type) {
-    case FETCH_ACCOUNT: {
+    case UPDATE_BALANCES: {
       const {
-        address,
         balanceMana,
         balanceInvested,
         allowanceMana
       } = action.payload;
       return {
         ...state,
-        address,
         balanceMana,
         balanceInvested,
         allowanceMana
+      };
+    }
+    case FETCH_ACCOUNT: {
+      const {
+        address,
+      } = action.payload;
+      return {
+        ...state,
+        address
       };
     }
     case UPDATE_ALLOWANCE: {

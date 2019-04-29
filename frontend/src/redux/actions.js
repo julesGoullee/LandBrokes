@@ -1,6 +1,8 @@
 import assert from 'assert';
 import * as Ethers from 'ethers';
-import { TOGGLE_SIDEBAR, FETCH_ACCOUNT, UPDATE_ALLOWANCE} from "./actionTypes";
+import * as Decimal from 'decimal.js';
+
+import { TOGGLE_SIDEBAR, UPDATE_BALANCES, FETCH_ACCOUNT, UPDATE_ALLOWANCE  } from "./actionTypes";
 import Config from '../config';
 
 import MANAToken from '../contracts/decentraland/MANAToken';
@@ -43,6 +45,32 @@ async function _setAccount(){
 
 }
 
+export function updateBalances(){
+
+  assert(isInit, 'web3_not_initialized');
+
+  return async (dispatch) => {
+
+    const address = await wallet.getAddress();
+
+    const balanceMana = await contractMana.balanceOf(address);
+    const balanceInvested = await contractBank.getSplitBalance(address);
+    const allowanceManaValue = await contractMana.allowance(address, Config.contractsAddress[Config.network].addressBank);
+
+    dispatch({
+      type: UPDATE_BALANCES,
+      payload: {
+        address,
+        balanceMana: balanceMana.toString(),
+        balanceInvested: balanceInvested.toString(),
+        allowanceMana: allowanceManaValue.toString()
+      }
+    });
+
+  };
+
+}
+
 export function fetchAccount() {
 
   return async (dispatch) => {
@@ -52,19 +80,11 @@ export function fetchAccount() {
 
     const address = await wallet.getAddress();
 
-    const balanceMana = await contractMana.balanceOf(address);
-    const balanceInvested = await contractBank.getSplitBalance(address, Ethers.utils.formatBytes32String(Config.tokenTicker) );
-
-    const allowanceManaValue = await contractMana.allowance(address, Config.contractsAddress[Config.network].addressBank);
+    await dispatch(updateBalances() );
 
     dispatch({
       type: FETCH_ACCOUNT,
-      payload: {
-        address,
-        balanceMana: balanceMana.toString(),
-        balanceInvested: balanceInvested.toString(),
-        allowanceMana: allowanceManaValue.toString()
-      }
+      payload: {  address  }
     });
 
   }
@@ -72,6 +92,8 @@ export function fetchAccount() {
 }
 
 export function allowMana(){
+
+  assert(isInit, 'web3_not_initialized');
 
   return async (dispatch, getState) => {
 
@@ -90,7 +112,7 @@ export function allowMana(){
     dispatch({
       type: UPDATE_ALLOWANCE,
       payload: {
-        allowanceMana: true
+        allowanceMana: Config.amountAllowance
       }
     });
 
@@ -98,10 +120,19 @@ export function allowMana(){
 
 }
 
-export function invest(){
+export function invest(e, amount = '123'){ //TODO input ui for amount
+
+  assert(isInit, 'web3_not_initialized');
 
   return async (dispatch, getState) => {
 
+    const state = getState();
+    assert(Decimal(state.account.allowanceMana).gte(amount), 'allowance_not_enough');
+
+    const tx = await contractBank.depositMANA(1, await wallet.getAddress(), amount);
+
+    await tx.wait();
+    await dispatch(updateBalances() );
 
   }
 
