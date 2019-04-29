@@ -11,6 +11,10 @@ import LANDRegistry from '../contracts/decentraland/LANDRegistry';
 import Bank from '../contracts/IBank';
 import SplitLand from '../contracts/ISplitLand';
 
+const balanceTypes = {
+  whole: 0,
+  split: 1
+};
 let provider = null;
 let wallet = null;
 let contractBank = null;
@@ -87,7 +91,7 @@ export function fetchAccount() {
       payload: {  address  }
     });
 
-  }
+  };
 
 }
 
@@ -116,7 +120,7 @@ export function allowMana(){
       }
     });
 
-  }
+  };
 
 }
 
@@ -129,11 +133,29 @@ export function invest(e, amount = '123'){ //TODO input ui for amount
     const state = getState();
     assert(Decimal(state.account.allowanceMana).gte(amount), 'allowance_not_enough');
 
-    const tx = await contractBank.depositMANA(1, await wallet.getAddress(), amount);
+    const tx = await contractBank.depositMANA(balanceTypes.split, await wallet.getAddress(), amount);
 
     await tx.wait();
     await dispatch(updateBalances() );
 
-  }
+  };
+
+}
+
+export function withdraw(e, amount = '123') { //TODO input ui for amount
+
+  assert(isInit, 'web3_not_initialized');
+
+  return async (dispatch, getState) => {
+
+    const state = getState();
+    assert(Decimal(state.account.balanceInvested).gte(amount), 'invested_balance_not_enough');
+
+    const tx = await contractBank.withdrawMANA(balanceTypes.split, amount);
+
+    await tx.wait();
+    await dispatch(updateBalances() );
+
+  };
 
 }

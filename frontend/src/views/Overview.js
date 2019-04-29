@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { Container, Row, Col, Card, CardHeader, CardBody } from "shards-react";
 import * as Ethers from 'ethers';
 
-import { allowMana, invest } from "../redux/actions";
+import { allowMana, invest, withdraw } from "../redux/actions";
 
 import PageTitle from "./../components/common/PageTitle";
 import SmallStats from "./../components/common/SmallStats";
@@ -21,7 +21,8 @@ class Overview extends React.Component {
       balanceInvested,
       allowanceMana,
       allowMana,
-      invest
+      invest,
+      withdraw
     } = this.props;
 
     return (
@@ -67,7 +68,15 @@ class Overview extends React.Component {
           <Col className="mb-4">
           </Col>
           <Col className="mb-4">
-
+            {
+              balanceInvested !== '0' &&
+              <button
+                onClick={withdraw}
+                className="bg-success text-white text-center rounded p-3"
+                style={{ boxShadow: "inset 0 0 5px rgba(0,0,0,.2)" }}>
+                Withdraw
+              </button>
+            }
           </Col>
           <Col className="mb-4">
             {
@@ -288,5 +297,6 @@ const mapStateToProps = state => {
 
 export default connect(mapStateToProps, {
   allowMana,
-  invest
+  invest,
+  withdraw
 })(Overview);
