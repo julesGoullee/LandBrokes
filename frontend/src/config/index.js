@@ -1,4 +1,6 @@
 const Config = {
+  amountAllowance: process.env.REACT_APP_AMOUNT_ALLOWANCE || '10000000000000000000000000000', //10**(18 + 10)
+  tokenTicker: process.env.REACT_APP_TOKEN_TICKER || 'MANA',
   network: process.env.NETWORK || 'development',
   contractsAddress: {
     development: {

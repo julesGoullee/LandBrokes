@@ -1,6 +1,6 @@
 import assert from 'assert';
 import * as Ethers from 'ethers';
-import { FETCH_ACCOUNT, TOGGLE_SIDEBAR} from "./actionTypes";
+import { TOGGLE_SIDEBAR, FETCH_ACCOUNT, UPDATE_ALLOWANCE} from "./actionTypes";
 import Config from '../config';
 
 import MANAToken from '../contracts/decentraland/MANAToken';
@@ -53,14 +53,17 @@ export function fetchAccount() {
     const address = await wallet.getAddress();
 
     const balanceMana = await contractMana.balanceOf(address);
-    const balanceInvested = await contractBank.getSplitBalance(address, Ethers.utils.formatBytes32String('MANA') );
+    const balanceInvested = await contractBank.getSplitBalance(address, Ethers.utils.formatBytes32String(Config.tokenTicker) );
+
+    const allowanceManaValue = await contractMana.allowance(address, Config.contractsAddress[Config.network].addressBank);
 
     dispatch({
       type: FETCH_ACCOUNT,
       payload: {
         address,
         balanceMana: balanceMana.toString(),
-        balanceInvested: balanceInvested.toString()
+        balanceInvested: balanceInvested.toString(),
+        allowanceMana: allowanceManaValue.toString()
       }
     });
 
@@ -68,3 +71,38 @@ export function fetchAccount() {
 
 }
 
+export function allowMana(){
+
+  return async (dispatch, getState) => {
+
+    const state = getState();
+
+    if(state.account.allowanceMana !== '0'){
+
+      return true;
+
+    }
+
+    const tx = await contractMana.approve(Config.contractsAddress[Config.network].addressBank, Config.amountAllowance);
+
+    await tx.wait();
+
+    dispatch({
+      type: UPDATE_ALLOWANCE,
+      payload: {
+        allowanceMana: true
+      }
+    });
+
+  }
+
+}
+
+export function invest(){
+
+  return async (dispatch, getState) => {
+
+
+  }
+
+}

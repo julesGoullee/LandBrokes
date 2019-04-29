@@ -680,9 +680,9 @@
   "sourceMap": "",
   "deployedSourceMap": "",
   "source": "pragma solidity 0.5.7;\n\nimport \"openzeppelin-solidity/contracts/token/ERC20/IERC20.sol\";\nimport \"openzeppelin-solidity/contracts/token/ERC721/IERC721Receiver.sol\";\nimport \"../interfaces/decentraland/IMarketplace.sol\";\nimport \"./ISplitLand.sol\";\n\ncontract IBank is IERC721Receiver {\n\n  //Functions having onlyOwner are managed by our backend\n\n  event ProcessedBid(uint256 landId, uint256 totalBid, uint256 duration);\n  event BoughtLand(uint256 landId);\n  event DepositedMANA(uint8 depositType, address caller, address target, uint256 amount);\n  event WithdrewMANA(uint8 depositType, address caller, uint256 amount);\n  event RegisteredBidResult(uint8 result, uint256 bidPosition);\n  event SplitUnassignedLand(address _tokenAddress, uint256 _tokenId, uint256 parts);\n  event TransferredUnassignedLand(address to, uint256 tokenId);\n  event SplitExternalLand(address owner, address _tokenAddress,\n    uint256 _tokenId, uint256 parts);\n  event ReconstructedLand(uint256 id, address caller, address reconstructedLandReceiver);\n\n  struct Land {\n\n    ISplitLand splitLandToken;\n\n    uint256 parts;\n\n  }\n\n  struct BidData {\n\n    bytes bidData;\n\n    uint256 landId;\n\n    uint256 creationTimestamp;\n\n    uint8 bidStatus;\n\n  }\n\n  //Hashed tickers used in splitBalances and wholeBalances\n  bytes32 public MANA;\n\n  //How many land owners can pool money together at once in order to bid\n  uint8 public MAX_LAND_OWNERS;\n\n  //Maximum number of pieces a patch of LAND can be split in\n  uint16 public MAX_LAND_SPLITS;\n\n  //When submitting a bid, we specify this duration (which is 1 day less than max amount permitted)\n  uint256 public BID_DURATION;\n\n  //The amount of time needs to pass since we locked some investor money for a bid but we did not update the bid status so it can be cancelled and investors get their money back\n  uint256 public NO_ACTION_CANCEL_BID_AFTER;\n\n  //How much MANA was deposited for buying whole plots of LAND without splitting\n  uint256 public wholeLandMANAFunds;\n\n  //How much MANA was deposited for buying whole plots of LAND and then split them\n  uint256 public splitLandMANAFunds;\n\n  //Address of MANA token\n  IERC20 manaToken;\n\n  // Land marketplace\n  Marketplace marketplace;\n\n  //Land registry address\n  address landRegistry;\n\n  //The address of the LAND ERC721\n  address landAddress;\n\n  /**\n  *  When submitting a bid we lock up the funds of the investors we take money from.\n  *  In order for them to get their money back in case we don't update the bid status\n  *  for a specific bid, we abi.encode the investors and _amountsInvested\n  *  and store the resulting bytes in a Bid struct alongside the current timestamp\n  *  and the ONGOING status\n  **/\n  BidData[] bids;\n\n  //Some people want to let us invest for them but only want a fraction of LAND\n  mapping(address => mapping(bytes32 => uint256)) splitBalances;\n\n  //Indices list for splitBalances\n  address[] splitBalancesIndices;\n\n  //Others want to let us invest for them and target whole plots of LAND\n  mapping(address => mapping(bytes32 => uint256)) wholeBalances;\n\n  //Funds already used in a bid\n  mapping(address => mapping(bytes32 => uint256)) lockedForBidding;\n\n  //LAND id being bid on by us\n  mapping(uint256 => bool) beingBid;\n\n  //Details for LAND token deposited in this contract and split; mapping LAND token id to Land struct\n  mapping(uint256 => Land) landDetails;\n\n  //Telling if a LAND is in the Bank\n  mapping(uint256 => bool) landIsInBank;\n\n  mapping(uint256 => bytes) unassignedLand;\n\n  enum BID_RESULT {ONGOING, SUCCESSFUL, FAILED, CANCELLED}\n\n  enum BALANCE_TYPE {SPLIT, WHOLE}\n\n  enum INVESTMENT_TYPE {WHOLE, SPLIT}\n\n  function getSplitInvestorsData() public view returns (\n    address[] memory investorsAddress,\n    uint256[] memory amountInvested\n  );\n\n  function getLandTokenSplitAddress(\n    uint256 landID\n  ) public view returns (address);\n\n  function getDepositedLandParts(\n    uint256 landID\n  ) public view returns (uint256);\n\n  function getSplitBalance(\n    address who,\n    bytes32 hashedCoinTicker\n  ) public view returns (uint256);\n\n  function getWholeBalance(\n    address who,\n    bytes32 hashedCoinTicker\n  ) public view returns (uint256);\n\n  function getLockedFunds(\n    address who,\n    bytes32 coinTicker\n  ) public view returns (uint256);\n\n  function landIsBeingBid(\n    uint256 landId\n  ) public view returns (bool);\n\n  function getBidInvestorData(\n    uint256 position\n  ) public view returns (bytes memory);\n\n//  function getBidCreation(\n//    uint256 position\n//  ) public view returns (uint256);\n\n  function getBidStatus(\n    uint256 position\n  ) public view returns (uint8);\n\n  //needs onlyOwner\n\n  /**\n  * @dev Bid for land using the Decentraland Bid contract.\n         Our backend monitors this smart contract and\n         uses the balances that investors entrusted us with to bid for\n         the best LAND we can find for sale. We are effectively an investment\n         fund for millenials and Gen Zs. They simply send money to this\n         contract and we take care to invest it\n\n  *  In the investors array we cannot mix those who want only a fraction\n     of LAND and those who want a whole plot\n\n  * @param investmentType - SPLIT or WHOLE (we will divide the LAND or we give the entire LAND to one entity)\n  * @param landId - The id of the LAND we want to invest in\n  * @param investors - The addresses whose funds we will use to bid\n  * @param _amountsInvested - The amount we use from each investor's balance\n  */\n  function bidForLand(\n    uint8 investmentType,\n    uint256 landId,\n    address[] calldata investors,\n    uint256[] calldata _amountsInvested)\n  external;\n\n  /**\n  * Buy land directly without going through the bid process.\n  * Params are similar to bidForLand apart from marketplace which is the contract\n  * where we can buy LAND directly\n  **/\n  function directBuyLand(\n    uint8 investmentType,\n    uint256 landId,\n    address[] calldata investors,\n    uint256[] calldata _amountsInvested\n  ) external;\n\n  //Needs onlyOwner\n\n  /**\n  * This function is used to assign land after buying it\n\n  * @param unassignedLandId - The id of the LAND which is not assigned\n  **/\n\n  function assignLand(uint256 unassignedLandId) external;\n\n  /**\n  * @dev Entrust the contract with MANA so it can be invested for you or for someone you deposit for\n  * @param balanceType - 0 or 1 (SPLIT OR WHOLE)\n  * @param _target - Who receives the MANA in their balance\n  * @param _amount - How much MANA is deposited\n  **/\n  function depositMANA(uint8 balanceType, address _target, uint256 _amount) external;\n\n  /**\n  * @dev Withdraw MANA from the contract\n  * @param balanceType - 0 or 1 (SPLIT OR WHOLE)\n  * @param _amount - How much MANA is being withdrawn\n  **/\n  function withdrawMANA(uint8 balanceType, uint256 _amount) external;\n\n  /**\n  * @dev Register the result of a bid.\n         If unsuccessful, transfer funds from locked to either split or\n         whole balances. If we want to cancel, call the cancelLandBid\n         function and send funds from locked to normal balances.\n         If successful and the investors we took money from wanted SPLIT,\n         we decrease the amounts from lockedForBidding and we create a\n         new SplitLand ERC20 contract where we distribute LAND parts to\n         investors. If the investment type is WHOLE, we just send the entire\n         LAND to the investor. When distributing LAND parts, each investor\n         will get a proportional amount of LAND parts according to how much\n         money we used from their balance, compared to total amount invested\n         in that LAND.\n\n  * @param result - It can be 0, 1 or 2 (SUCCESSFUL, FAILED, CANCELLED)\n  * @param bidPosition - The position of the bid in the bids array\n  **/\n\n  //needs onlyOwner\n\n  function registerBidResult(\n    uint8 result,\n    uint256 bidPosition)\n  external;\n\n  /**\n  * @dev Allow anyone to deposit a LAND token in this contract and create\n         a SplitLand ERC20 contract where all the LAND parts are assigned\n         in the constructor to msg.sender. The LAND token deposited in this contract\n         cannot be transferred elsewhere unless someone has all the LAND parts\n         in the balance in the SplitLand contract and calls reconstructLand.\n\n         When creating a new SplitContract, create a new Land struct with\n         the address of the new contract and how many portions of LAND\n         were created.\n\n  * @param _tokenId - The id of the LAND we want to invest in\n  * @param landParts - Needs to be less than or equal to MAX_LAND_SPLITS\n                       Tells the newly created SplitLand contract in how\n                       many smaller parts we divided the LAND\n  **/\n  function generalSplitLand(\n    uint256 _tokenId,\n    uint256 landParts)\n  external;\n\n  /**\n  * @dev Reconstruct and entire LAND token from the LAND parts in a SplitLand\n         contract and then send the LAND to reconstructedLandReceiver.\n         The msg.sender needs to have all the LAND parts in their balance inside\n         the SplitLand contract.\n\n  * @param id - The id of the LAND token the caller wants to reconstruct\n  * @param reconstructedLandReceiver - The receiver of the reconstructed LAND token\n  **/\n  function reconstructLand(\n    uint256 id,\n    address reconstructedLandReceiver)\n  external;\n\n  /**\n  * @dev Cancel a bid if it hasn't been updated for the time specified in NO_ACTION_CANCEL_BID_AFTER\n  *      This function should decode the bytes value, get the investors and amounts arrays,\n         and send the money out of this contract and back to the investors. Remember to decrease the\n         lockedForBidding value for each investor! Also update the bid status to CANCELLED\n\n  * @param bidPosition - The position of the bid in the bids array\n  **/\n  function cancelBidAfterNoAction(\n    uint256 bidPosition\n  ) external;\n\n}\n",
-  "sourcePath": "/home/stefan/Work/LandBrokes/chain/bankContracts/contracts/interfaces/IBank.sol",
+  "sourcePath": "/Users/jules/WebstormProjects/RobInTheHood/chain/bankContracts/contracts/interfaces/IBank.sol",
   "ast": {
-    "absolutePath": "/home/stefan/Work/LandBrokes/chain/bankContracts/contracts/interfaces/IBank.sol",
+    "absolutePath": "/Users/jules/WebstormProjects/RobInTheHood/chain/bankContracts/contracts/interfaces/IBank.sol",
     "exportedSymbols": {
       "IBank": [
         2291
@@ -724,7 +724,7 @@
         "unitAlias": ""
       },
       {
-        "absolutePath": "/home/stefan/Work/LandBrokes/chain/bankContracts/contracts/interfaces/decentraland/IMarketplace.sol",
+        "absolutePath": "/Users/jules/WebstormProjects/RobInTheHood/chain/bankContracts/contracts/interfaces/decentraland/IMarketplace.sol",
         "file": "../interfaces/decentraland/IMarketplace.sol",
         "id": 1988,
         "nodeType": "ImportDirective",
@@ -735,7 +735,7 @@
         "unitAlias": ""
       },
       {
-        "absolutePath": "/home/stefan/Work/LandBrokes/chain/bankContracts/contracts/interfaces/ISplitLand.sol",
+        "absolutePath": "/Users/jules/WebstormProjects/RobInTheHood/chain/bankContracts/contracts/interfaces/ISplitLand.sol",
         "file": "./ISplitLand.sol",
         "id": 1989,
         "nodeType": "ImportDirective",
@@ -4276,7 +4276,7 @@
     "src": "0:9812:3"
   },
   "legacyAST": {
-    "absolutePath": "/home/stefan/Work/LandBrokes/chain/bankContracts/contracts/interfaces/IBank.sol",
+    "absolutePath": "/Users/jules/WebstormProjects/RobInTheHood/chain/bankContracts/contracts/interfaces/IBank.sol",
     "exportedSymbols": {
       "IBank": [
         2291
@@ -4318,7 +4318,7 @@
         "unitAlias": ""
       },
       {
-        "absolutePath": "/home/stefan/Work/LandBrokes/chain/bankContracts/contracts/interfaces/decentraland/IMarketplace.sol",
+        "absolutePath": "/Users/jules/WebstormProjects/RobInTheHood/chain/bankContracts/contracts/interfaces/decentraland/IMarketplace.sol",
         "file": "../interfaces/decentraland/IMarketplace.sol",
         "id": 1988,
         "nodeType": "ImportDirective",
@@ -4329,7 +4329,7 @@
         "unitAlias": ""
       },
       {
-        "absolutePath": "/home/stefan/Work/LandBrokes/chain/bankContracts/contracts/interfaces/ISplitLand.sol",
+        "absolutePath": "/Users/jules/WebstormProjects/RobInTheHood/chain/bankContracts/contracts/interfaces/ISplitLand.sol",
         "file": "./ISplitLand.sol",
         "id": 1989,
         "nodeType": "ImportDirective",
@@ -7875,7 +7875,7 @@
   },
   "networks": {},
   "schemaVersion": "3.0.1",
-  "updatedAt": "2019-04-28T23:16:25.254Z",
+  "updatedAt": "2019-04-29T10:40:41.054Z",
   "devdoc": {
     "methods": {
       "assignLand(uint256)": {

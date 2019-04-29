@@ -3,6 +3,8 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Container, Row, Col, Card, CardHeader, CardBody } from "shards-react";
 
+import { allowMana } from "../redux/actions";
+
 import PageTitle from "./../components/common/PageTitle";
 import SmallStats from "./../components/common/SmallStats";
 // import Cards from 'react-credit-cards';
@@ -11,7 +13,15 @@ class Overview extends React.Component {
 
   render() {
 
-    const { smallStats, address, balanceMana, balanceInvested } = this.props;
+    const {
+      smallStats,
+      address,
+      balanceMana,
+      balanceInvested,
+      allowanceMana,
+      allowMana
+    } = this.props;
+
     return (
       <Container fluid className="main-content-container px-4">
         {/* Page Header */}
@@ -38,7 +48,7 @@ class Overview extends React.Component {
         </Row>
 
         <Row noGutters className="mb-2">
-          <strong>Address: { address } Balance mana: { balanceMana } Balance Invested: { balanceInvested } </strong>
+          <strong>Address: { address } Balance mana: { balanceMana } Balance Invested: { balanceInvested } allowanceMana: { allowanceMana !== '0' ? 'yes' : 'no' } </strong>
         </Row>
 
         <Row className="mb-2">
@@ -58,13 +68,22 @@ class Overview extends React.Component {
 
           </Col>
           <Col className="mb-4">
+            {
+              allowanceMana === '0' &&
+              <button
+                onClick={allowMana}
+                className="bg-success text-white text-center rounded p-3"
+                style={{ boxShadow: "inset 0 0 5px rgba(0,0,0,.2)" }}>
+                Allow bank transfer mana
+              </button>
+            }
           </Col>
           <Col className="mb-4">
-            <div
+            <button
               className="bg-success text-white text-center rounded p-3"
               style={{ boxShadow: "inset 0 0 5px rgba(0,0,0,.2)" }}>
               Invest
-            </div>
+            </button>
           </Col>
         </Row>
         <Row>
@@ -259,7 +278,8 @@ const mapStateToProps = state => {
     address: state.account.address,
     balanceMana: state.account.balanceMana,
     balanceInvested: state.account.balanceInvested,
+    allowanceMana: state.account.allowanceMana
   };
 };
 
-export default connect(mapStateToProps)(Overview);
+export default connect(mapStateToProps, { allowMana })(Overview);

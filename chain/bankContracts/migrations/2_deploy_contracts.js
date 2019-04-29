@@ -51,13 +51,9 @@ module.exports = async function (deployer, network, accounts) {
       addressDecentralandBid,
     ];
 
-    deployer.deploy(Bank, ...bankParams, { from: accounts[0] }).then(async function() {
-    await deployer.deploy(VotingCredit, proposalDuration, {from: accounts[0]}).then(async function() {
-    await deployer.deploy(CreditScoring, ...creditScoringParams, { from: accounts[0] }).then(async function() {
-
-      var credit = await CreditScoring.deployed()
-
-    }) }) })
+    await deployer.deploy(Bank, ...bankParams, { from: accounts[0] });
+    await deployer.deploy(VotingCredit, proposalDuration, {from: accounts[0]});
+    await deployer.deploy(CreditScoring, ...creditScoringParams, { from: accounts[0] });
 
   } else if (network === 'ropsten') {}
 
