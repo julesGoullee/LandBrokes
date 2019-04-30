@@ -9,7 +9,7 @@ export default function() {
     {
       title: "Credit",
       htmlBefore: '<i class="material-icons">credit_card</i>',
-      to: "/tables",
+      to: "/credit",
     }
   ];
 }

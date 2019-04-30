@@ -48,7 +48,7 @@ export default [
     component: ComponentsOverview
   },
   {
-    path: "/tables",
+    path: "/credit",
     layout: DefaultLayout,
     component: Tables
   },
