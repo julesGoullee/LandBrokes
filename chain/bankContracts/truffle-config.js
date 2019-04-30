@@ -1,14 +1,14 @@
 require('dotenv').config();
 // const HDWalletProvider = require("truffle-hdwallet-provider");
 // const mnemonic = process.env.MNEMONIC;
-// const rpc = process.env.RPC;
+const rpcHost = process.env.RPC_HOST || "127.0.0.1";
 
 module.exports = {
 
   networks: {
 
     development: {
-      host: "127.0.0.1",
+      host: rpcHost,
       port: 8545,
       network_id: "*",
       // gas: 6721975,

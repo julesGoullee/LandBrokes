@@ -2,6 +2,9 @@ import React from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Container, Row, Col, Card, CardHeader, CardBody } from "shards-react";
+import * as Ethers from 'ethers';
+
+import { allowMana, invest, withdraw } from "../redux/actions";
 
 import PageTitle from "./../components/common/PageTitle";
 import SmallStats from "./../components/common/SmallStats";
@@ -11,7 +14,17 @@ class Overview extends React.Component {
 
   render() {
 
-    const { smallStats, address, balanceMana, balanceInvested } = this.props;
+    const {
+      smallStats,
+      address,
+      balanceMana,
+      balanceInvested,
+      allowanceMana,
+      allowMana,
+      invest,
+      withdraw
+    } = this.props;
+
     return (
       <Container fluid className="main-content-container px-4">
         {/* Page Header */}
@@ -38,7 +51,7 @@ class Overview extends React.Component {
         </Row>
 
         <Row noGutters className="mb-2">
-          <strong>Address: { address } Balance mana: { balanceMana } Balance Invested: { balanceInvested } </strong>
+          <strong>Address: { address } Balance mana: { Ethers.utils.formatEther(balanceMana) } Balance Invested: { Ethers.utils.formatEther(balanceInvested) } allowanceMana: { Ethers.utils.formatEther(allowanceMana) } </strong>
         </Row>
 
         <Row className="mb-2">
@@ -55,16 +68,35 @@ class Overview extends React.Component {
           <Col className="mb-4">
           </Col>
           <Col className="mb-4">
-
+            {
+              balanceInvested !== '0' &&
+              <button
+                onClick={withdraw}
+                className="bg-success text-white text-center rounded p-3"
+                style={{ boxShadow: "inset 0 0 5px rgba(0,0,0,.2)" }}>
+                Withdraw
+              </button>
+            }
           </Col>
           <Col className="mb-4">
-          </Col>
-          <Col className="mb-4">
-            <div
-              className="bg-success text-white text-center rounded p-3"
-              style={{ boxShadow: "inset 0 0 5px rgba(0,0,0,.2)" }}>
-              Invest
-            </div>
+            {
+              allowanceMana === '0' &&
+              <button
+                onClick={allowMana}
+                className="bg-success text-white text-center rounded p-3"
+                style={{ boxShadow: "inset 0 0 5px rgba(0,0,0,.2)" }}>
+                Allow bank transfer mana
+              </button>
+            }
+            {
+              allowanceMana !== '0' &&
+              <button
+                onClick={invest}
+                className="bg-success text-white text-center rounded p-3"
+                style={{ boxShadow: "inset 0 0 5px rgba(0,0,0,.2)" }}>
+                Invest
+              </button>
+            }
           </Col>
         </Row>
         <Row>
@@ -259,7 +291,12 @@ const mapStateToProps = state => {
     address: state.account.address,
     balanceMana: state.account.balanceMana,
     balanceInvested: state.account.balanceInvested,
+    allowanceMana: state.account.allowanceMana
   };
 };
 
-export default connect(mapStateToProps)(Overview);
+export default connect(mapStateToProps, {
+  allowMana,
+  invest,
+  withdraw
+})(Overview);

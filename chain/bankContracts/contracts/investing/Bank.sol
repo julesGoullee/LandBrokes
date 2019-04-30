@@ -606,11 +606,10 @@ contract Bank is IBank, Ownable {
   }
 
   function getSplitBalance(
-    address who,
-    bytes32 hashedCoinTicker
+    address who
   ) public view returns (uint256) {
 
-    return splitBalances[who][hashedCoinTicker];
+    return splitBalances[who][MANA];
 
   }
 
