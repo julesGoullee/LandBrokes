@@ -50,9 +50,9 @@ class Overview extends React.Component {
           ))}
         </Row>
 
-        <Row noGutters className="mb-2">
-          <strong>Address: { address } Balance mana: { Ethers.utils.formatEther(balanceMana) } Balance Invested: { Ethers.utils.formatEther(balanceInvested) } allowanceMana: { Ethers.utils.formatEther(allowanceMana) } </strong>
-        </Row>
+        {/*<Row noGutters className="mb-2">*/}
+        {/*  <strong>Address: { address } Balance mana: { Ethers.utils.formatEther(balanceMana) } Balance Invested: { Ethers.utils.formatEther(balanceInvested) } allowanceMana: { Ethers.utils.formatEther(allowanceMana) } </strong>*/}
+        {/*</Row>*/}
 
         <Row className="mb-2">
           <Col lg="12">
@@ -68,35 +68,41 @@ class Overview extends React.Component {
           <Col className="mb-4">
           </Col>
           <Col className="mb-4">
-            {
-              balanceInvested !== '0' &&
-              <button
-                onClick={withdraw}
-                className="bg-success text-white text-center rounded p-3"
-                style={{ boxShadow: "inset 0 0 5px rgba(0,0,0,.2)" }}>
-                Withdraw
-              </button>
-            }
+            {/*{*/}
+            {/*  balanceInvested !== '0' &&*/}
+            {/*  <button*/}
+            {/*    onClick={withdraw}*/}
+            {/*    className="bg-success text-white text-center rounded p-3"*/}
+            {/*    style={{ boxShadow: "inset 0 0 5px rgba(0,0,0,.2)" }}>*/}
+            {/*    Withdraw*/}
+            {/*  </button>*/}
+            {/*}*/}
           </Col>
           <Col className="mb-4">
-            {
-              allowanceMana === '0' &&
-              <button
-                onClick={allowMana}
-                className="bg-success text-white text-center rounded p-3"
-                style={{ boxShadow: "inset 0 0 5px rgba(0,0,0,.2)" }}>
-                Allow bank transfer mana
-              </button>
-            }
-            {
-              allowanceMana !== '0' &&
-              <button
-                onClick={invest}
-                className="bg-success text-white text-center rounded p-3"
-                style={{ boxShadow: "inset 0 0 5px rgba(0,0,0,.2)" }}>
-                Invest
-              </button>
-            }
+            {/*{*/}
+            {/*  allowanceMana === '0' &&*/}
+            {/*  <button*/}
+            {/*    onClick={allowMana}*/}
+            {/*    className="bg-success text-white text-center rounded p-3"*/}
+            {/*    style={{ boxShadow: "inset 0 0 5px rgba(0,0,0,.2)" }}>*/}
+            {/*    Allow bank transfer mana*/}
+            {/*  </button>*/}
+            {/*}*/}
+            {/*{*/}
+            {/*  allowanceMana !== '0' &&*/}
+            {/*  <button*/}
+            {/*    onClick={invest}*/}
+            {/*    className="bg-success text-white text-center rounded p-3"*/}
+            {/*    style={{ boxShadow: "inset 0 0 5px rgba(0,0,0,.2)" }}>*/}
+            {/*    Invest*/}
+            {/*  </button>*/}
+            {/*}*/}
+            <button
+              // onClick={invest}
+              className="bg-success text-white text-center rounded p-3"
+              style={{ boxShadow: "inset 0 0 5px rgba(0,0,0,.2)" }}>
+              Invest
+            </button>
           </Col>
         </Row>
         <Row>
