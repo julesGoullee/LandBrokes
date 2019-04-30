@@ -1,3 +1,4 @@
 export const TOGGLE_SIDEBAR = "TOGGLE_SIDEBAR";
+export const UPDATE_BALANCES = "UPDATE_BALANCES";
 export const FETCH_ACCOUNT = "FETCH_ACCOUNT";
-export const CHANGE = "CHANGE";
+export const UPDATE_ALLOWANCE = "UPDATE_ALLOWANCE";
